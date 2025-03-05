@@ -36,7 +36,7 @@ export class AuthGuard implements CanActivate {
     private reflector: Reflector,
   ) {
     this.jwtSecret =
-      this.configService.get<string>('jwt.secret') || JWT_CONSTANTS.secret
+      this.configService.get<string>('auth.secret') || JWT_CONSTANTS.secret
   }
 
   /**

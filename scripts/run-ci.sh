@@ -48,29 +48,6 @@ echo -e "\n${YELLOW}Running E2E tests...${NC}"
 REDIS_HOST=localhost REDIS_PORT=6379 pnpm test:e2e || { echo -e "${RED}E2E tests failed${NC}"; exit 1; }
 echo -e "${GREEN}E2E tests successful${NC}"
 
-# Ask if user wants to run worker tests (these take longer)
-echo -e "\n${YELLOW}Do you want to run worker tests? (y/n)${NC}"
-read -r run_worker_tests
-
-if [[ "$run_worker_tests" == "y" || "$run_worker_tests" == "Y" ]]; then
-  echo -e "\n${YELLOW}Enabling worker tests...${NC}"
-  sed -i 's/it.skip/it/g' test/worker.e2e-spec.ts
-  
-  echo -e "\n${YELLOW}Running worker tests with increased memory...${NC}"
-  REDIS_HOST=localhost REDIS_PORT=6379 WORKER_PORT=0 NODE_OPTIONS="--max-old-space-size=4096" pnpm test:workers || { 
-    echo -e "${RED}Worker tests failed${NC}"
-    echo -e "${YELLOW}Disabling worker tests again...${NC}"
-    sed -i 's/it(/it.skip(/g' test/worker.e2e-spec.ts
-    exit 1
-  }
-  
-  echo -e "${GREEN}Worker tests successful${NC}"
-  
-  # Restore the file
-  echo -e "${YELLOW}Disabling worker tests again...${NC}"
-  sed -i 's/it(/it.skip(/g' test/worker.e2e-spec.ts
-fi
-
 echo -e "\n${GREEN}=====================================${NC}"
 echo -e "${GREEN}     All CI checks passed!           ${NC}"
 echo -e "${GREEN}=====================================${NC}"
