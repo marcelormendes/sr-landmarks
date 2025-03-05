@@ -1,0 +1,4 @@
+# Prisma Migrate lockfile v1
+# Read more about conflict resolution here: https://pris.ly/d/migrate-conflicts
+
+20250305010000_add_geohash = true

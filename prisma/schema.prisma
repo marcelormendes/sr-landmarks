@@ -1,0 +1,36 @@
+// This is your Prisma schema file
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Landmark {
+  id        Int      @id @default(autoincrement())
+  name      String
+  type      String
+  centerLat Float
+  centerLng Float
+  geohash   String?  // New field for geohash
+
+  @@map("landmarks")
+  @@index([geohash]) // Index for faster querying by geohash
+}
+
+model WebhookRequest {
+  id                Int       @id @default(autoincrement())
+  requestId         String    @unique // The generated tracking ID
+  status            String    // 'pending', 'completed', 'failed'
+  lat               Float     // Original latitude from request
+  lng               Float     // Original longitude from request
+  radius            Float     // Requested radius
+  createdAt         DateTime  @default(now())
+  completedAt       DateTime? // Will be null until processing is complete
+  error             String?   // Will be null unless processing failed
+
+  @@map("webhook_requests")
+}

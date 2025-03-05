@@ -1,0 +1,86 @@
+services:
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_TTL=3600
+      - PORT=3000
+      - DATABASE_FILE=landmarks.sqlite
+      - JWT_SECRET=this-is-a-very-secure-auth-secret-key-for-production-environment-12345
+      - OVERPASS_API_URL=https://overpass-api.de/api/interpreter
+      - OVERPASS_TIMEOUT=30000
+      - OVERPASS_MAX_RETRIES=3
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:4200
+      - SERVICE_TYPE=api
+    networks:
+      - app-network
+    restart: unless-stopped
+    # Store SQLite database as a volume
+    volumes:
+      - db_data:/app/prisma
+
+  # Dedicated worker instances for queue processing
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - ENTRY_FILE=worker.js
+    # Run multiple worker replicas for scalability
+    deploy:
+      replicas: 2
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_TTL=3600
+      - WORKER_PORT=3100
+      - DATABASE_FILE=landmarks.sqlite
+      - JWT_SECRET=this-is-a-very-secure-auth-secret-key-for-production-environment-12345
+      - OVERPASS_API_URL=https://overpass-api.de/api/interpreter
+      - OVERPASS_TIMEOUT=30000
+      - OVERPASS_MAX_RETRIES=3
+      - SERVICE_TYPE=worker
+    networks:
+      - app-network
+    restart: unless-stopped
+    # Share the same database as the API
+    volumes:
+      - db_data:/app/prisma
+    command: node dist/worker.js
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+  db_data:
