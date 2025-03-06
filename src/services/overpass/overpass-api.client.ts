@@ -9,17 +9,15 @@ import { OverpassApiResponse } from '../../interfaces/overpass.api.response'
  */
 @Injectable()
 export class OverpassApiClient {
-  private readonly apiUrl: string
-  private readonly timeout: number
-  private readonly maxRetries: number
+  private readonly apiUrl: string | undefined
+  private readonly timeout: number | undefined
+  private readonly maxRetries: number | undefined
   private readonly logger = new Logger(OverpassApiClient.name)
 
   constructor(private readonly configService: ConfigService) {
-    this.apiUrl =
-      this.configService.get<string>('overpass.url') ||
-      'https://overpass-api.de/api/interpreter'
-    this.timeout = this.configService.get<number>('overpass.timeout') || 60000
-    this.maxRetries = this.configService.get<number>('overpass.maxRetries') || 3
+    this.apiUrl = this.configService.get<string>('overpass.url')
+    this.timeout = this.configService.get<number>('overpass.timeout')
+    this.maxRetries = this.configService.get<number>('overpass.maxRetries')
   }
 
   /**

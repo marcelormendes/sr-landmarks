@@ -2,17 +2,7 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
 import { JWT_CONSTANTS } from '../constants/auth.constants'
-
-/**
- * Payload for JWT tokens
- */
-export interface JwtPayload {
-  sub: string
-  apiKey: string
-  iat?: number
-  exp?: number
-}
-
+import { JwtPayload } from '../interfaces/auth.interface'
 /**
  * Service for handling authentication and JWT token operations
  */
@@ -31,8 +21,6 @@ export class AuthService {
 
   /**
    * Validates API key against configured secret
-   * @param apiKey - API key to validate
-   * @returns True if valid
    */
   validateApiKey(apiKey: string): boolean {
     if (!apiKey) {
@@ -44,10 +32,8 @@ export class AuthService {
 
   /**
    * Generate a JWT token for an API client
-   * @param apiKey - The API key to include in the token
-   * @returns JWT token
    */
-  async generateToken(apiKey: string): Promise<string> {
+  public async generateToken(apiKey: string): Promise<string> {
     if (!this.validateApiKey(apiKey)) {
       this.logger.warn(`Token generation attempt with invalid API key`)
       throw new UnauthorizedException('Invalid API key')
@@ -63,10 +49,8 @@ export class AuthService {
 
   /**
    * Verify a JWT token
-   * @param token - JWT token to verify
-   * @returns JWT payload if valid
    */
-  async verifyToken(token: string): Promise<JwtPayload> {
+  public async verifyToken(token: string): Promise<JwtPayload> {
     try {
       return await this.jwtService.verifyAsync<JwtPayload>(token, {
         secret: this.apiSecret,

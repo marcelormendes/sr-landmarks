@@ -15,7 +15,7 @@ export class OverpassResponseProcessor {
    * Processes the response from the Overpass API into an array of landmarks
    * Filters invalid elements and transforms each element
    */
-  processResponse(response: OverpassResponse): LandmarkDto[] {
+  public processResponse(response: OverpassResponse): LandmarkDto[] {
     return response.elements
       .filter((element) => element.center || (element.lat && element.lon))
       .map((element) => this.processElement(element))

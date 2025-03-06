@@ -10,7 +10,7 @@ export class WebhookRequestRepository {
   /**
    * Create a new webhook request record
    */
-  async createRequest(data: {
+  public async createRequest(data: {
     requestId: string
     lat: number
     lng: number
@@ -32,7 +32,7 @@ export class WebhookRequestRepository {
   /**
    * Update a webhook request record when processing is complete
    */
-  async markAsCompleted(requestId: string) {
+  public async markAsCompleted(requestId: string) {
     this.logger.debug(`Marking webhook request as completed: ${requestId}`)
 
     return this.prisma.webhookRequest.update({
@@ -47,7 +47,7 @@ export class WebhookRequestRepository {
   /**
    * Update a webhook request record when processing fails
    */
-  async markAsFailed(requestId: string, error: string) {
+  public async markAsFailed(requestId: string, error: string) {
     this.logger.debug(`Marking webhook request as failed: ${requestId}`)
 
     return this.prisma.webhookRequest.update({
@@ -63,7 +63,7 @@ export class WebhookRequestRepository {
   /**
    * Get webhook request by its ID
    */
-  async getById(requestId: string) {
+  public async getById(requestId: string) {
     return this.prisma.webhookRequest.findUnique({
       where: { requestId },
     })

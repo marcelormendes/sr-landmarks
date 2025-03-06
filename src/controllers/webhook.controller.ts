@@ -30,11 +30,12 @@ import {
   WebhookStatusDto,
 } from '../dto/webhook.dto'
 import {
-  UUID_REGEX,
   HTTP_STATUS,
   ERROR_MESSAGES,
   RESPONSE_MESSAGES,
+  DEFAULT_SEARCH_RADIUS,
 } from '../constants'
+import { UuidSchema } from '../schemas/webhook.schema'
 
 /**
  * Controller for handling webhook endpoints.
@@ -73,7 +74,7 @@ export class WebhookController {
       .processCoordinates(
         coordinates.lat,
         coordinates.lng,
-        coordinates.radius || 500,
+        coordinates.radius || DEFAULT_SEARCH_RADIUS,
         requestId,
       )
       .catch((error: unknown) => {
@@ -100,19 +101,9 @@ export class WebhookController {
   @ApiResponse(WebhookApiDocs.RESPONSES.STATUS_OK)
   @ApiResponse(WebhookApiDocs.RESPONSES.NOT_FOUND)
   async getWebhookStatus(
-    @Param('uuid') requestId: string,
+    @Param('uuid', new EnhancedZodValidationPipe(UuidSchema)) requestId: string,
   ): Promise<WebhookStatusDto> {
-    // Validate the UUID format manually
     try {
-      if (!UUID_REGEX.test(requestId)) {
-        throw new BadRequestException({
-          message: ERROR_MESSAGES.INVALID_UUID,
-          details: [
-            { field: 'uuid', message: 'Request ID must be a valid UUID' },
-          ],
-        })
-      }
-
       const webhookRequest =
         await this.webhookService.getWebhookStatus(requestId)
 
@@ -124,13 +115,13 @@ export class WebhookController {
         requestId: webhookRequest.requestId,
         status: webhookRequest.status,
         createdAt: webhookRequest.createdAt,
-        completedAt: webhookRequest.completedAt,
+        completedAt: webhookRequest.completedAt || undefined,
         coordinates: {
           lat: webhookRequest.lat,
           lng: webhookRequest.lng,
           radius: webhookRequest.radius,
         },
-        error: webhookRequest.error,
+        error: webhookRequest.error || undefined,
       }
     } catch (error) {
       // Rethrow NotFoundException and BadRequestException
@@ -144,7 +135,7 @@ export class WebhookController {
       this.logger.error(
         `Error getting webhook status: ${error instanceof Error ? error.message : 'Unknown error'}`,
       )
-      throw new BadRequestException(ERROR_MESSAGES.WEBHOOK_REQUEST_NOT_FOUND)
+      throw new BadRequestException(ERROR_MESSAGES.INTERNAL_SERVER_ERROR)
     }
   }
 }

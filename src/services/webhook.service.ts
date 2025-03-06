@@ -20,7 +20,7 @@ export class WebhookService {
    * Processes coordinates by adding a job to the queue
    * Uses geohash for consistent processing
    */
-  async processCoordinates(
+  public async processCoordinates(
     lat: number,
     lng: number,
     radius: number,

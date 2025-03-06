@@ -2,12 +2,11 @@ import { Controller, Get, Query, Logger, HttpCode } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger'
 import { LandmarksService } from '../services/landmarks/landmarks.service'
 import { LandmarkDto } from '../dto/landmark.dto'
-import { QueryCoordinateSchema } from '../schemas/coordinate-validation.schema'
 import { EnhancedZodValidationPipe } from '../schemas/pipes/zod-validation.pipe'
-import { QueryCoordinates } from 'src/interfaces/coordinates.interface'
 import { LandmarksApiDocs } from './docs/api-docs'
 import { HTTP_STATUS } from '../constants'
 import { Public } from '../decorators/public.decorator'
+import { LandmarksSchema, LandmarkLocation } from '../schemas/landmarks.schema'
 /**
  * Controller for handling landmark-related API endpoints
  * All endpoints are public (no authentication required)
@@ -38,8 +37,8 @@ export class LandmarksController {
   @ApiResponse(LandmarksApiDocs.RESPONSES.BAD_REQUEST)
   @ApiResponse(LandmarksApiDocs.RESPONSES.TOO_MANY_REQUESTS)
   async getLandmarks(
-    @Query(new EnhancedZodValidationPipe(QueryCoordinateSchema))
-    coordinates: QueryCoordinates,
+    @Query(new EnhancedZodValidationPipe(LandmarksSchema))
+    coordinates: LandmarkLocation,
   ): Promise<LandmarkDto[]> {
     this.logger.log(
       `Retrieving landmarks for coordinates: lat=${coordinates.lat}, lng=${coordinates.lng}`,

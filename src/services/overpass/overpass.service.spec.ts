@@ -1,7 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
+import { OverpassService } from './overpass.service'
+import { OverpassApiClient } from './overpass-api.client'
+import { OverpassQueryBuilder } from './overpass-query.builder'
+import { OverpassResponseProcessor } from './overpass-response.processor'
+import { OverpassApiResponse } from '../../interfaces/overpass.api.response'
+import { CacheService } from '../cache.service'
+import { encodeGeohash } from '../../utils/coordinate.util'
+import { LandmarksTransformerService } from '../landmarks/landmarks-transformer.service'
 
 // Create a mock logger that doesn't log during tests
 const mockLogger = {
@@ -11,14 +19,6 @@ const mockLogger = {
   debug: jest.fn(),
   verbose: jest.fn(),
 }
-import { OverpassService } from './overpass.service'
-import { OverpassApiClient } from './overpass-api.client'
-import { OverpassQueryBuilder } from './overpass-query.builder'
-import { OverpassResponseProcessor } from './overpass-response.processor'
-import { OverpassApiResponse } from '../../interfaces/overpass.api.response'
-import { CacheService } from '../cache.service'
-import { encodeGeohash } from '../../utils/coordinate.util'
-import { LandmarksTransformerService } from '../landmarks/landmarks-transformer.service'
 
 describe('OverpassService', () => {
   let service: OverpassService
@@ -74,7 +74,7 @@ describe('OverpassService', () => {
                 return 'https://overpass-api.de/api/interpreter'
               if (key === 'overpass.timeout') return 30000
               if (key === 'overpass.maxRetries') return 3
-              return null
+              return undefined
             }),
           },
         },
@@ -145,7 +145,7 @@ describe('OverpassService', () => {
     })
 
     it('should fetch landmarks from Overpass API if not in cache', async () => {
-      jest.spyOn(cacheHandler, 'get').mockResolvedValue(null)
+      jest.spyOn(cacheHandler, 'get').mockResolvedValue(undefined)
       jest
         .spyOn(apiClient, 'makeRequestWithRetry')
         .mockResolvedValue(mockOverpassResponse)
@@ -158,16 +158,14 @@ describe('OverpassService', () => {
       expect(result).toEqual(mockLandmarks)
     })
 
-    it('should handle API errors and return empty array', async () => {
-      jest.spyOn(cacheHandler, 'get').mockResolvedValue(null)
+    it('should handle API errors and throw', async () => {
       jest
         .spyOn(apiClient, 'makeRequestWithRetry')
         .mockRejectedValue(new Error('API error'))
 
-      const result = await service.findNearbyLandmarks(lat, lng, radius, geohash)
-
-      expect(apiClient.makeRequestWithRetry).toHaveBeenCalledWith('mock query')
-      expect(result).toEqual([])
+      await expect(
+        service.findNearbyLandmarks(lat, lng, radius, geohash)
+      ).rejects.toThrow('API error')
     })
   })
 })

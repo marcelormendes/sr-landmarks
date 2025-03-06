@@ -22,66 +22,49 @@ export class LandmarksSearchService {
    * Searches for landmarks near given coordinates using geohash
    * Implements a write-through caching strategy
    */
-  async searchLandmarksByCoordinates(
+  public async searchLandmarksByCoordinates(
     lat: number,
     lng: number,
   ): Promise<LandmarkDto[]> {
-    const geohash = encodeGeohash(lat, lng)
-    // Keep key consistent with other cache operations
-    const cacheKey = geohash
-    this.logger.log(
-      `Searching landmarks with geohash: ${geohash}, cache key: ${cacheKey}`,
-    )
+    const cacheKey = encodeGeohash(lat, lng)
+    this.logger.log(`Searching landmarks for cache key: ${cacheKey}`)
 
-    // First try to get from cache
+    const cachedLandmarks = await this.getCachedLandmarks(cacheKey)
+    if (cachedLandmarks) {
+      return cachedLandmarks
+    }
+
+    return await this.fetchFromDbAndCache(cacheKey)
+  }
+
+  private async getCachedLandmarks(
+    cacheKey: string,
+  ): Promise<LandmarkDto[] | undefined> {
     const cachedData = await this.cacheService.get<LandmarkDto[]>(cacheKey)
-
-    this.logger.debug(
-      `Cache lookup result for ${cacheKey}: ${cachedData ? 'hit' : 'miss'}`,
-    )
-
-    if (cachedData && Array.isArray(cachedData) && cachedData.length > 0) {
-      this.logger.log(
-        `Cache hit for geohash ${geohash}. Found ${cachedData.length} landmarks`,
-      )
+    if (cachedData && cachedData.length > 0) {
+      this.logger.log(`Cache hit for key ${cacheKey}`)
       return cachedData
     }
+    this.logger.debug(`Cache miss for key ${cacheKey}`)
+    return undefined
+  }
 
-    // If not in cache, get from database
-    const dbLandmarks = await this.landmarkRepository.findByGeohash(geohash)
+  private async fetchFromDbAndCache(cacheKey: string): Promise<LandmarkDto[]> {
+    const dbLandmarks = await this.landmarkRepository.findByGeohash(cacheKey)
 
-    if (dbLandmarks && dbLandmarks.length > 0) {
-      this.logger.log(
-        `Database hit for geohash ${geohash}. Found ${dbLandmarks.length} landmarks`,
+    if (!dbLandmarks.length) {
+      throw new NotFoundException(
+        `No landmarks found for coordinates (${cacheKey})`,
       )
-
-      // Transform DB entities to DTOs
-      const landmarkDtos =
-        this.transformerService.transformLandmarks(dbLandmarks)
-
-      // Ensure we have valid data before caching
-      if (
-        landmarkDtos &&
-        Array.isArray(landmarkDtos) &&
-        landmarkDtos.length > 0
-      ) {
-        // Cache the results
-        this.logger.log(
-          `Caching ${landmarkDtos.length} landmarks with key: ${cacheKey}`,
-        )
-        await this.cacheService.set(cacheKey, landmarkDtos, 3600)
-      } else {
-        this.logger.warn(
-          `Not caching empty or invalid landmark data for ${geohash}`,
-        )
-      }
-
-      return landmarkDtos
     }
 
-    // If not found in database either, we don't have landmarks for these coordinates
-    throw new NotFoundException(
-      `No landmarks found for coordinates (${geohash})`,
+    const landmarkDtos = this.transformerService.transformLandmarks(dbLandmarks)
+
+    await this.cacheService.set(cacheKey, landmarkDtos, 3600)
+    this.logger.log(
+      `Cached ${landmarkDtos.length} landmarks with key: ${cacheKey}`,
     )
+
+    return landmarkDtos
   }
 }

@@ -10,11 +10,11 @@ describe('WebhookRequestRepository', () => {
   // Mock data with proper types for Prisma
   const mockWebhookRequest = {
     id: 1,
-    requestId: 'test-request-id',
-    lat: 40.0,
-    lng: -74.0,
-    radius: 500,
-    status: 'pending',
+    requestId: 'test-id',
+    lat: 0,
+    lng: 0,
+    radius: 100,
+    status: 'PENDING',
     createdAt: new Date(),
     completedAt: null,
     error: null,
@@ -22,8 +22,9 @@ describe('WebhookRequestRepository', () => {
 
   const mockCompletedWebhookRequest = {
     ...mockWebhookRequest,
-    status: 'completed',
+    status: 'COMPLETED',
     completedAt: new Date(),
+    error: null,
   }
 
   const mockFailedWebhookRequest = {

@@ -10,6 +10,7 @@ export const ERROR_MESSAGES = {
   INVALID_WEBHOOK_PAYLOAD: 'Invalid webhook payload',
   DATABASE_ERROR: 'Database operation failed',
   QUEUE_ERROR: 'Failed to add job to the queue',
+  INTERNAL_SERVER_ERROR: 'Internal server error',
 }
 
 /**

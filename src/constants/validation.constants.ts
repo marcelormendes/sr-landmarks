@@ -18,3 +18,9 @@ export const MIN_LATITUDE = -90
 export const MAX_LATITUDE = 90
 export const MIN_LONGITUDE = -180
 export const MAX_LONGITUDE = 180
+
+/**
+ * Cache TTL constants
+ */
+export const CACHE_TTL_3600_SECONDS = 3600
+export const CACHE_TTL_1_HOUR = 1 * 60 * 60

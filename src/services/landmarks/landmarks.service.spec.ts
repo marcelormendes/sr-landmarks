@@ -56,7 +56,7 @@ describe('LandmarksService', () => {
       const roundedLat = roundCoordinate(lat)
       const roundedLng = roundCoordinate(lng)
 
-      jest.spyOn(cacheService, 'get').mockResolvedValue(null)
+      jest.spyOn(cacheService, 'get').mockResolvedValue(undefined)
       jest
         .spyOn(searchService, 'searchLandmarksByCoordinates')
         .mockResolvedValue(mockLandmarks)
@@ -88,7 +88,7 @@ describe('LandmarksService', () => {
       const lng = -74.54321
       const error = new NotFoundException('Landmarks not found')
 
-      jest.spyOn(cacheService, 'get').mockResolvedValue(null)
+      jest.spyOn(cacheService, 'get').mockResolvedValue(undefined)
       jest
         .spyOn(searchService, 'searchLandmarksByCoordinates')
         .mockRejectedValue(error)
@@ -103,7 +103,7 @@ describe('LandmarksService', () => {
       const lng = -74.54321
       const error = new ServiceUnavailableException('External API unavailable')
 
-      jest.spyOn(cacheService, 'get').mockResolvedValue(null)
+      jest.spyOn(cacheService, 'get').mockResolvedValue(undefined)
       jest
         .spyOn(searchService, 'searchLandmarksByCoordinates')
         .mockRejectedValue(error)
