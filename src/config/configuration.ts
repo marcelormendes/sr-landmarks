@@ -1,45 +1,5 @@
+import { envSchema } from '../schemas/configuration.schema'
 import { JWT_CONSTANTS } from '../constants/auth.constants'
-// z is imported but not used, removing to fix lint error
-import { z } from 'zod'
-
-// Define schema for environment validation
-const envSchema = z.object({
-  NODE_ENV: z
-    .enum(['development', 'production', 'test'])
-    .default('development'),
-  PORT: z
-    .string()
-    .transform((val) => parseInt(val, 10))
-    .default('3000'),
-  DATABASE_FILE: z.string().default('landmarks.sqlite'),
-  REDIS_HOST: z.string().default('localhost'),
-  REDIS_PORT: z
-    .string()
-    .transform((val) => parseInt(val, 10))
-    .default('6379'),
-  REDIS_TTL: z
-    .string()
-    .transform((val) => parseInt(val, 10))
-    .default('3600'),
-  JWT_SECRET: z.union([
-    z.string().min(16),
-    z.literal(undefined),
-    z.literal(''),
-  ]),
-  CORS_ALLOWED_ORIGINS: z.string().optional(),
-  OVERPASS_URL: z
-    .string()
-    .url()
-    .default('https://overpass-api.de/api/interpreter'),
-  OVERPASS_TIMEOUT: z
-    .string()
-    .transform((val) => parseInt(val, 10))
-    .default('30000'),
-  OVERPASS_MAX_RETRIES: z
-    .string()
-    .transform((val) => parseInt(val, 10))
-    .default('3'),
-})
 
 export default () => {
   // Check if we're in test mode
@@ -97,9 +57,9 @@ export default () => {
           (env.NODE_ENV === 'production' ? undefined : '*'),
       },
       overpass: {
-        url: env.OVERPASS_URL,
-        timeout: env.OVERPASS_TIMEOUT,
-        maxRetries: env.OVERPASS_MAX_RETRIES,
+        url: env.OVERPASS_URL || 'https://overpass-api.de/api/interpreter',
+        timeout: env.OVERPASS_TIMEOUT || 60000,
+        maxRetries: env.OVERPASS_MAX_RETRIES || 3,
       },
     }
   } catch (error: unknown) {

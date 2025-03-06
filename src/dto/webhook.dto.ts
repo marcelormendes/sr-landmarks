@@ -107,12 +107,11 @@ export class WebhookStatusDto {
   createdAt: Date
 
   @ApiProperty({
-    description: 'When processing was completed (null if pending)',
+    description: 'When processing was completed (undefined if pending)',
     example: '2025-03-04T15:22:35.123Z',
     required: false,
-    nullable: true,
   })
-  completedAt: Date | null
+  completedAt: Date | undefined
 
   @ApiProperty({
     description: 'Coordinates used for this webhook request',
@@ -121,12 +120,11 @@ export class WebhookStatusDto {
   coordinates: CoordinatesDto
 
   @ApiProperty({
-    description: 'Error message if processing failed (null otherwise)',
+    description: 'Error message if processing failed (undefined otherwise)',
     example: 'Overpass API timeout',
     required: false,
-    nullable: true,
   })
-  error: string | null
+  error: string | undefined
 }
 
 /**

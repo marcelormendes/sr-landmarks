@@ -37,7 +37,7 @@ import { REDIS_CLIENT } from '../app.module'
             'Failed to create Redis client for health module:',
             error,
           )
-          return null
+          return undefined
         }
       },
     },

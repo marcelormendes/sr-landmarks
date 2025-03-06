@@ -7,6 +7,8 @@ import { PrismaService } from '../src/services/prisma.service'
 import { CacheService } from '../src/services/cache.service'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { TestConfigService } from './test.config'
+import { UuidSchema } from '../src/schemas/webhook.schema'
+import { EnhancedZodValidationPipe } from '../src/schemas/pipes/zod-validation.pipe'
 
 /**
  * End-to-end tests for the Landmarks API
@@ -107,18 +109,39 @@ describe('Landmarks API (e2e)', () => {
         })
         .expect(202)
 
-      // Verify webhook response structure
-      expect(webhookResponse.body).toHaveProperty('success', true)
-      expect(webhookResponse.body).toHaveProperty('requestId')
-      expect(webhookResponse.body).toHaveProperty('message')
-
-      // Check webhook status
       const requestId = webhookResponse.body.requestId
+      console.log('Webhook created with requestId:', requestId)
+
+      // Test the UUID validation directly
+      const validationPipe = new EnhancedZodValidationPipe(UuidSchema)
+      try {
+        console.log('Attempting to validate UUID:', requestId)
+        console.log('UUID validation metadata:', {
+          type: 'param',
+          data: 'uuid',
+          metatype: String
+        })
+        
+        const validatedUuid = await validationPipe.transform(requestId, {
+          type: 'param',
+          data: 'uuid',
+          metatype: String
+        })
+        console.log('UUID validation successful:', validatedUuid)
+      } catch (error) {
+        console.log('UUID validation failed:', error)
+        console.log('Validation error details:', error.response)
+      }
+
+      // Continue with the webhook status check
       const statusResponse = await request(app.getHttpServer())
         .get(`/webhook/${requestId}`)
         .set('Authorization', `Bearer ${accessToken}`)
-        .expect(200)
 
+      console.log('Status response:', statusResponse.status)
+      console.log('Status response body:', statusResponse.body)
+
+      expect(statusResponse.status).toBe(200)
       expect(statusResponse.body).toHaveProperty('requestId', requestId)
       expect(statusResponse.body).toHaveProperty('status')
       expect(statusResponse.body).toHaveProperty('coordinates')

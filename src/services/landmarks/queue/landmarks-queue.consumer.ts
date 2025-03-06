@@ -6,15 +6,7 @@ import { WebhookRequestRepository } from '../../../repositories/webhook-request.
 import * as os from 'os'
 import { v4 as uuidv4 } from 'uuid'
 import { LANDMARKS_QUEUE } from '../../../constants/queue.constants'
-
-interface LandmarkProcessingJob {
-  lat: number
-  lng: number
-  radius: number
-  requestId: string
-  producerId?: string
-  timestamp?: string
-}
+import { LandmarkProcessingJob } from '../../../interfaces/job.interface'
 
 /**
  * Consumes jobs from the landmarks queue and processes them
@@ -45,7 +37,9 @@ export class LandmarksQueueConsumer extends WorkerHost {
    * Process jobs from the queue
    * This method is called by the worker when there's a job to process
    */
-  async process(job: Job<LandmarkProcessingJob, any, string>): Promise<any> {
+  public async process(
+    job: Job<LandmarkProcessingJob, any, string>,
+  ): Promise<any> {
     const { lat, lng, radius, requestId, producerId, timestamp } = job.data
 
     this.logger.log(

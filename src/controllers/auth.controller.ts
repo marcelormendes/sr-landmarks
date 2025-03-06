@@ -13,6 +13,7 @@ import { Public } from '../decorators/public.decorator'
 import { ApiKey, authSchema } from '../schemas/auth.schema'
 import { TokenResponseDto } from '../dto/auth.dto'
 import { EnhancedZodValidationPipe } from '../schemas/pipes/zod-validation.pipe'
+import { BEARER, ONE_HOUR } from '../constants/auth.constants'
 /**
  * Controller for authentication endpoints
  */
@@ -25,8 +26,6 @@ export class AuthController {
 
   /**
    * Exchange API key for JWT token
-   * @param body - Request body containing API key
-   * @returns JWT token response
    */
   @Post('token')
   @Public()
@@ -53,8 +52,8 @@ export class AuthController {
 
       return {
         access_token: token,
-        expires_in: 3600, // 1 hour
-        token_type: 'Bearer',
+        expires_in: ONE_HOUR,
+        token_type: BEARER,
       }
     } catch (error) {
       this.logger.warn(

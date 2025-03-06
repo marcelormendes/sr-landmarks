@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Queue } from 'bullmq'
-import { ConfigService } from '@nestjs/config'
 import { v4 as uuidv4 } from 'uuid'
 import * as os from 'os'
 
@@ -14,10 +13,7 @@ export class LandmarksQueueService {
   private readonly logger = new Logger(LandmarksQueueService.name)
   private readonly instanceId: string
 
-  constructor(
-    @InjectQueue('landmarks') private landmarksQueue: Queue,
-    private configService: ConfigService,
-  ) {
+  constructor(@InjectQueue('landmarks') private landmarksQueue: Queue) {
     // Generate a robust instance identifier that combines hostname with a UUID
     // This provides both uniqueness and traceability in distributed environments
     const hostname = os.hostname().split('.')[0] // Get hostname without domain
@@ -31,14 +27,8 @@ export class LandmarksQueueService {
 
   /**
    * Adds a job to process landmarks by coordinates to the queue
-   *
-   * @param lat - Latitude coordinate
-   * @param lng - Longitude coordinate
-   * @param radius - Search radius in meters
-   * @param requestId - Webhook request ID for tracking
-   * @returns Job ID
    */
-  async addLandmarkProcessingJob(
+  public async addLandmarkProcessingJob(
     lat: number,
     lng: number,
     radius: number,
@@ -64,7 +54,7 @@ export class LandmarksQueueService {
   /**
    * Gets information about the queue
    */
-  async getQueueInfo() {
+  public async getQueueInfo() {
     const [waiting, active, completed, failed] = await Promise.all([
       this.landmarksQueue.getWaitingCount(),
       this.landmarksQueue.getActiveCount(),

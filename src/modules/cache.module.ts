@@ -30,7 +30,7 @@ import { Redis } from 'ioredis'
           })
         } catch (error) {
           console.error('Failed to create fallback Redis client:', error)
-          return null
+          return undefined
         }
       },
     },

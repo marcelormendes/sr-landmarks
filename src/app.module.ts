@@ -115,7 +115,7 @@ import { AuthGuard } from './controllers/guard/auth.guard'
                   console.log(
                     `Redis GET result for ${prefixedKey}: ${result ? 'hit' : 'miss'}`,
                   )
-                  return result ? (JSON.parse(result) as unknown) : null
+                  return result ? (JSON.parse(result) as unknown) : undefined
                 },
                 async set(key, value, ttl) {
                   const prefixedKey = `cache:${key}`

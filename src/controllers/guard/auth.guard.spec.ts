@@ -50,7 +50,7 @@ describe('AuthGuard', () => {
           useValue: {
             get: jest.fn((key) => {
               if (key === 'auth.secret') return 'test-secret-key'
-              return null
+              return undefined
             }),
           },
         },
@@ -139,7 +139,7 @@ describe('AuthGuard', () => {
       const request = { 
         headers: { authorization: `${BEARER_AUTH_TYPE} ${token}` }, 
         socket: { remoteAddress: '127.0.0.1' },
-        user: null 
+        user: undefined 
       }
       
       const context = mockExecutionContext(request.headers)

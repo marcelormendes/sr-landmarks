@@ -26,3 +26,7 @@ export const AUTH_ERROR_MESSAGES = {
   TOKEN_EXPIRED: 'Token has expired',
   TOKEN_INVALID: 'Token is invalid',
 }
+
+export const ONE_HOUR = 3600
+
+export const BEARER = 'Bearer'

@@ -18,14 +18,18 @@ export class EnhancedZodValidationPipe implements PipeTransform {
     // If we have no value or an empty object
     if (
       !value ||
-      ((value as Record<string, unknown>) &&
-        Object.keys(value as Record<string, unknown>).length === 0)
+      (typeof value === 'object' && Object.keys(value).length === 0)
     ) {
       throw new BadRequestException('No data provided')
     }
 
     try {
-      // Get the raw object if it's a class instance
+      // If it's a primitive type (string, number, etc), use it directly
+      if (typeof value !== 'object' || value === null) {
+        return this.schema.parse(value)
+      }
+
+      // For objects, handle as before
       const objValue = value as { constructor?: { name?: string } }
       const rawValue =
         objValue.constructor?.name === 'Object'
@@ -36,6 +40,7 @@ export class EnhancedZodValidationPipe implements PipeTransform {
       const result = this.schema.parse(rawValue)
       return result
     } catch (error: unknown) {
+      console.log('ZodValidationPipe - Validation error:', error)
       if (error instanceof ZodError) {
         const formattedErrors = error.errors.map((err) => ({
           field: err.path.join('.'),
@@ -48,7 +53,7 @@ export class EnhancedZodValidationPipe implements PipeTransform {
 
         // For coordinates-related schemas, use the specialized exception
         if (
-          this.schema.description?.includes('coordinate') ||
+          this.schema.description?.includes('landmark') ||
           _metadata.data?.includes('lat') ||
           _metadata.data?.includes('lng')
         ) {

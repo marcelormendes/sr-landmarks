@@ -23,7 +23,6 @@ export const isTestEnvironment = (): boolean => {
 
 /**
  * Creates a logger that is silent during tests but logs normally in production
- * @param context The class or context name for the logger
  */
 export const createTestSafeLogger = (context: string): Logger => {
   // Return a mock logger in test environment

@@ -20,14 +20,14 @@ export class PrismaService
   /**
    * Establishes a connection to the database when the module initializes
    */
-  async onModuleInit() {
+  public async onModuleInit() {
     await this.$connect()
   }
 
   /**
    * Closes the database connection when the module is destroyed
    */
-  async onModuleDestroy() {
+  public async onModuleDestroy() {
     await this.$disconnect()
   }
 }

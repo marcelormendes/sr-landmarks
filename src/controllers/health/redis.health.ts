@@ -2,20 +2,9 @@ import { Injectable, Logger, Optional } from '@nestjs/common'
 import { HealthIndicatorResult } from '@nestjs/terminus'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject } from '@nestjs/common'
-import { Cache } from 'cache-manager'
 import { Redis } from 'ioredis'
 import { REDIS_CLIENT } from '../../app.module'
-
-// Define types for internal cache store structure
-interface RedisStore {
-  client?: Redis
-  getClient?: () => Redis
-}
-
-interface CacheManagerWithStore extends Cache {
-  store?: RedisStore
-}
-
+import { CacheManagerWithStore } from '../../interfaces/redis.interface'
 /**
  * Health indicator for Redis connection.
  * Tests Redis connectivity by performing simple cache operations.
@@ -23,11 +12,8 @@ interface CacheManagerWithStore extends Cache {
 @Injectable()
 export class RedisHealthIndicator {
   private readonly logger = new Logger(RedisHealthIndicator.name)
-  private redis: Redis | null = null
+  private redis: Redis | undefined = undefined
 
-  /**
-   * @param cacheManager Cache manager instance
-   */
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: CacheManagerWithStore,
     @Inject(REDIS_CLIENT) @Optional() private injectedRedis?: Redis,
@@ -81,9 +67,6 @@ export class RedisHealthIndicator {
 
   /**
    * Checks if Redis is healthy by setting and retrieving a test value
-   *
-   * @param key - The key to use in the health check result
-   * @returns Promise resolving to a health indicator result object
    */
   async checkHealth(key: string): Promise<HealthIndicatorResult> {
     try {

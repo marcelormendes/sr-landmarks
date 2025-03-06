@@ -16,14 +16,14 @@ export class LandmarkRepository {
   /**
    * Creates multiple landmark records at once
    */
-  async createMany(data: Prisma.LandmarkCreateManyInput[]) {
+  public async createMany(data: Prisma.LandmarkCreateManyInput[]) {
     return this.prisma.landmark.createMany({ data })
   }
 
   /**
    * Finds landmarks by geohash
    */
-  async findByGeohash(geohash: string): Promise<Landmark[]> {
+  public async findByGeohash(geohash: string): Promise<Landmark[]> {
     try {
       return await this.prisma.landmark.findMany({
         where: { geohash },

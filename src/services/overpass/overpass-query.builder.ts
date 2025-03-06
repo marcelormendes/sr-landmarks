@@ -9,7 +9,7 @@ export class OverpassQueryBuilder {
   /**
    * Builds an Overpass QL query to find tourist attractions within a radius of coordinates
    */
-  buildQuery(lat: number, lng: number, radius: number): string {
+  public buildQuery(lat: number, lng: number, radius: number): string {
     return `
       [out:json];
       (

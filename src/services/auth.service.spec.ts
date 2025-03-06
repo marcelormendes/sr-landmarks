@@ -28,7 +28,7 @@ describe('AuthService', () => {
           useValue: {
             get: jest.fn().mockImplementation((key) => {
               if (key === 'jwt.secret') return TEST_SECRET
-              return null
+              return undefined
             }),
           },
         },
@@ -57,8 +57,8 @@ describe('AuthService', () => {
       expect(service.validateApiKey('')).toBe(false)
     })
 
-    it('should return false for null API key', () => {
-      expect(service.validateApiKey(null as unknown as string)).toBe(false)
+    it('should return false for undefined API key', () => {
+      expect(service.validateApiKey(undefined as unknown as string)).toBe(false)
     })
   })
 

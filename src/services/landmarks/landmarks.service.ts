@@ -22,7 +22,10 @@ export class LandmarksService {
    * Searches for landmarks within a specified radius of given coordinates
    * Uses a geohash-based caching strategy
    */
-  async searchLandmarks(lat: number, lng: number): Promise<LandmarkDto[]> {
+  public async searchLandmarks(
+    lat: number,
+    lng: number,
+  ): Promise<LandmarkDto[]> {
     // Round coordinates for consistency
     const roundedLat = roundCoordinate(lat)
     const roundedLng = roundCoordinate(lng)
