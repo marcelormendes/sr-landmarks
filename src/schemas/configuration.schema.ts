@@ -37,4 +37,8 @@ export const envSchema = z.object({
     .string()
     .transform((val) => parseInt(val, 10))
     .default('3'),
+  API_SYNC_TIMEOUT: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .default('60000'),
 })

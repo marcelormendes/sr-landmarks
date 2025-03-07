@@ -16,6 +16,9 @@ RUN npm install -g pnpm
 RUN adduser --disabled-password --gecos "" nodejs && \
     chown nodejs:nodejs /app
 
+# Create data directory with proper permissions
+RUN mkdir -p /data && chown nodejs:nodejs /data
+
 # Create the entrypoint script
 COPY --chown=nodejs:nodejs <<'EOF' /app/docker-entrypoint.sh
 #!/bin/bash
@@ -32,13 +35,16 @@ wait_for_redis() {
 
 # Initialize the database if we're the first instance
 init_database() {
-  if [ "$SERVICE_TYPE" = "api" ] || [ "$SERVICE_TYPE" = "worker" ] && [ ! -f /app/prisma/.init-complete ]; then
+  if [ "$SERVICE_TYPE" = "api" ]; then
     echo "Initializing database..."
-    rm -f /app/prisma/dev.db
+    mkdir -p "$(dirname $DATABASE_FILE)"
+    rm -f "$DATABASE_FILE"
     redis-cli -h $REDIS_HOST FLUSHALL
     pnpm prisma migrate reset --force
-    touch /app/prisma/.init-complete
     echo "Database initialization complete!"
+  elif [ "$SERVICE_TYPE" = "worker" ]; then
+    echo "Worker service starting..."
+    mkdir -p "$(dirname $DATABASE_FILE)"
   fi
 }
 

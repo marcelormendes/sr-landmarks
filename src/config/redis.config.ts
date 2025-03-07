@@ -7,12 +7,6 @@ export function createRedisCacheConfig() {
     imports: [ConfigModule],
     inject: [ConfigService],
     useFactory: (_configService: ConfigService) => {
-      // Log Redis connection info for debugging
-      console.log(
-        `Redis connection: ${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
-      )
-      console.log(`Redis TTL: ${process.env.REDIS_TTL} seconds`)
-
       return {
         ttl: parseInt(process.env.REDIS_TTL || '3600'),
         max: 1000,
@@ -26,38 +20,14 @@ export function createRedisCacheConfig() {
             const redis = new Redis({
               host: process.env.REDIS_HOST,
               port: parseInt(process.env.REDIS_PORT || '6379'),
-              connectTimeout: 5000, // Increase timeout to 5 seconds
-              maxRetriesPerRequest: 5, // Increase retries per request
               reconnectOnError: (err) => {
                 console.log(`Redis connection error: ${err.message}`)
                 return true // Always reconnect
               },
               retryStrategy: (times) => {
                 console.log(`Retrying Redis connection, attempt #${times}`)
-                const delay = Math.min(times * 500, 5000) // Wait max 5 seconds between retries
-                console.log(`Next retry in ${delay}ms`)
-                return delay
+                return Math.min(times * 100, 3000) // Wait max 3 seconds
               },
-            })
-
-            // Add error event handler
-            redis.on('error', (err) => {
-              console.error('Redis client error:', err)
-            })
-
-            // Add ready event handler
-            redis.on('ready', () => {
-              console.log('Redis client ready')
-            })
-
-            // Add connect event handler
-            redis.on('connect', () => {
-              console.log('Redis client connected')
-            })
-
-            // Add reconnecting event handler
-            redis.on('reconnecting', () => {
-              console.log('Redis client reconnecting')
             })
 
             return {

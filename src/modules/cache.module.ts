@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common'
+import { Global, Module, Logger } from '@nestjs/common'
 import { CacheService } from '../services/cache.service'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { Redis } from 'ioredis'
@@ -16,33 +16,30 @@ import { REDIS_CLIENT } from '../constants/tokens'
     {
       provide: REDIS_CLIENT,
       useFactory: (configService: ConfigService) => {
+        const logger = new Logger('CacheModule')
         const redisHost = configService.get<string>('REDIS_HOST') || 'localhost'
         const redisPort = parseInt(
           configService.get<string>('REDIS_PORT') || '6379',
         )
-
-        console.log(`Creating Redis client: ${redisHost}:${redisPort}`)
 
         const redis = new Redis({
           host: redisHost,
           port: redisPort,
           maxRetriesPerRequest: 5,
           retryStrategy: (times) => {
-            console.log(`Redis connection retry #${times}`)
             return Math.min(times * 100, 3000)
           },
-          reconnectOnError: (err) => {
-            console.log(`Redis connection error: ${err.message}`)
+          reconnectOnError: (_err) => {
             return true
           },
         })
 
         redis.on('connect', () => {
-          console.log('Redis client connected')
+          logger.log('Redis client connected')
         })
 
         redis.on('error', (err) => {
-          console.error(`Redis client error: ${err.message}`)
+          logger.error(`Redis client error: ${err.message}`)
         })
 
         return redis

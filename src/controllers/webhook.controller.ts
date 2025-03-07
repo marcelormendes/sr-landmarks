@@ -39,6 +39,7 @@ import {
 } from '../constants'
 import { LandmarksProcessorService } from '../services/landmarks/landmarks-processor.service'
 import { WebhookType } from '@prisma/client'
+import { ConfigService } from '@nestjs/config'
 /**
  * Controller for handling webhook endpoints.
  * Processes coordinate data and returns landmark information.
@@ -51,6 +52,7 @@ export class WebhookController {
   constructor(
     private webhookService: WebhookService,
     private landmarksProcessorService: LandmarksProcessorService,
+    private configService: ConfigService,
   ) {}
 
   /**
@@ -170,6 +172,10 @@ export class WebhookController {
     status: 500,
     description: 'Overpass API or processing failed',
   })
+  @ApiResponse({
+    status: 408,
+    description: 'Request timeout',
+  })
   async webhookRequestSync(
     @Body(new EnhancedZodValidationPipe(WebhookSchema))
     coordinates: WebhookRequestDto,
@@ -179,6 +185,11 @@ export class WebhookController {
     this.logger.log(
       `Synchronously processing webhook request ${requestId} for coordinates: (${coordinates.lat}, ${coordinates.lng})`,
     )
+
+    // Create an AbortController with the configured timeout
+    const controller = new AbortController()
+    const timeout = this.configService.get<number>('api.syncTimeout')
+    const timeoutId = setTimeout(() => controller.abort(), timeout)
 
     try {
       // First create the webhook request record
@@ -191,11 +202,18 @@ export class WebhookController {
       )
 
       // Then process coordinates fully within the request-response cycle
-      await this.landmarksProcessorService.processLandmarksByCoordinates(
-        lat,
-        lng,
-        radius,
-      )
+      await Promise.race([
+        this.landmarksProcessorService.processLandmarksByCoordinates(
+          lat,
+          lng,
+          radius,
+        ),
+        new Promise((_, reject) => {
+          controller.signal.addEventListener('abort', () => {
+            reject(new Error('Request timeout'))
+          })
+        }),
+      ])
 
       // Mark the request as completed since we processed it synchronously
       await this.webhookService.markAsCompleted(requestId)
@@ -216,15 +234,27 @@ export class WebhookController {
       // Mark the request as failed with a generic error message
       await this.webhookService.markAsFailed(
         requestId,
-        ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+        error instanceof Error && error.message === 'Request timeout'
+          ? 'Request timeout exceeded'
+          : ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       )
 
       // Return a clean error response
+      if (error instanceof Error && error.message === 'Request timeout') {
+        throw new InternalServerErrorException({
+          success: false,
+          requestId,
+          message: 'Request timeout exceeded',
+        })
+      }
+
       throw new InternalServerErrorException({
         success: false,
         requestId,
         message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       })
+    } finally {
+      clearTimeout(timeoutId)
     }
   }
 }
