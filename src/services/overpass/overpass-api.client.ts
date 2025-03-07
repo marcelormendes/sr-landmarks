@@ -45,7 +45,7 @@ export class OverpassApiClient {
     }
 
     console.log('query being used', query)
-    
+
     try {
       const response = await fetch(this.apiUrl, {
         method: 'POST',

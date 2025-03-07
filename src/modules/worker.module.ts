@@ -10,7 +10,7 @@ import { RepositoryModule } from './repository.module'
 import { PrismaModule } from './prisma.module'
 import { HealthModule } from './health.module'
 import { OverpassModule } from './overpass.module'
-import { createKeyv } from '@keyv/redis'
+import { createRedisCacheConfig } from '../config/redis.config'
 
 /**
  * Minimal module for worker-only instances
@@ -25,27 +25,7 @@ import { createKeyv } from '@keyv/redis'
     }),
 
     // Cache
-    CacheModule.registerAsync({
-      isGlobal: true,
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const redisConfig = configService.get<{
-          host: string
-          port: number
-          ttl: number
-        }>('redis')
-
-        if (!redisConfig) {
-          throw new Error('Redis configuration is missing')
-        }
-
-        return {
-          store: createKeyv(`redis://${redisConfig.host}:${redisConfig.port}`),
-          ttl: redisConfig.ttl,
-        }
-      },
-    }),
+    CacheModule.registerAsync(createRedisCacheConfig()),
 
     // Queue
     BullModule.forRootAsync({

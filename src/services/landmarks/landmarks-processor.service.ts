@@ -144,7 +144,17 @@ export class LandmarksProcessorService {
       type: landmark.type,
       centerLat: landmark.center.lat,
       centerLng: landmark.center.lng,
-      geohash: geohash, // Store the geohash with each landmark
+      geohash: geohash,
+      ...(landmark.address && { address: landmark.address }),
+      ...(landmark.moreInfo?.wiki && { wiki: landmark.moreInfo.wiki }),
+      ...(landmark.moreInfo?.website && { website: landmark.moreInfo.website }),
+      ...(landmark.moreInfo?.openingHours && {
+        openingHours: landmark.moreInfo.openingHours,
+      }),
+      ...(landmark.moreInfo?.accessibility && {
+        accessibility: landmark.moreInfo.accessibility,
+      }),
+      ...(landmark.moreInfo?.tourism && { tourism: landmark.moreInfo.tourism }),
     }))
 
     await this.landmarkRepository.createMany(landmarkEntities)

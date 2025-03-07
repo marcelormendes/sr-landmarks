@@ -10,6 +10,7 @@ import {
   NotFoundException,
   BadRequestException,
   InternalServerErrorException,
+  Version,
 } from '@nestjs/common'
 import { v4 as uuidv4 } from 'uuid'
 import { WebhookService } from '../services/webhook.service'
@@ -34,9 +35,10 @@ import {
   ERROR_MESSAGES,
   DEFAULT_SEARCH_RADIUS,
   RESPONSE_MESSAGES,
+  HTTP_STATUS,
 } from '../constants'
-import { ZodError } from 'zod'
-
+import { LandmarksProcessorService } from '../services/landmarks/landmarks-processor.service'
+import { WebhookType } from '@prisma/client'
 /**
  * Controller for handling webhook endpoints.
  * Processes coordinate data and returns landmark information.
@@ -46,7 +48,10 @@ import { ZodError } from 'zod'
 @Controller('webhook')
 export class WebhookController {
   private readonly logger = new Logger(WebhookController.name)
-  constructor(private webhookService: WebhookService) {}
+  constructor(
+    private webhookService: WebhookService,
+    private landmarksProcessorService: LandmarksProcessorService,
+  ) {}
 
   /**
    * Receives geographic coordinates via webhook and acknowledges receipt
@@ -54,12 +59,13 @@ export class WebhookController {
    */
   @Post()
   @UseGuards(AuthGuard)
+  @Version('1')
   @HttpCode(202)
   @ApiBearerAuth()
   @ApiOperation(WebhookApiDocs.OPERATIONS.POST_WEBHOOK)
   @ApiBody({ type: WebhookRequestDto })
   @ApiResponse(WebhookApiDocs.RESPONSES.ACCEPTED)
-  async processCoordinates(
+  async webhookRequest(
     @Body(new EnhancedZodValidationPipe(WebhookSchema))
     coordinates: WebhookRequestDto,
   ): Promise<WebhookResponseDto> {
@@ -73,6 +79,7 @@ export class WebhookController {
         lng,
         radius,
         requestId,
+        WebhookType.Async,
       )
 
       // Then start background processing
@@ -96,6 +103,7 @@ export class WebhookController {
    * Retrieve the status of a webhook request
    */
   @Get(`:${'uuid'}`)
+  @Version('1')
   @ApiOperation(WebhookApiDocs.OPERATIONS.GET_STATUS)
   @ApiParam(WebhookApiDocs.PARAMS.REQUEST_ID)
   @ApiResponse(WebhookApiDocs.RESPONSES.STATUS_OK)
@@ -135,7 +143,88 @@ export class WebhookController {
       this.logger.error(
         `Error getting webhook status: ${error instanceof Error ? error.message : 'Unknown error'}`,
       )
-      throw new BadRequestException(ERROR_MESSAGES.INTERNAL_SERVER_ERROR)
+      throw new InternalServerErrorException({
+        success: false,
+        message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      })
+    }
+  }
+  /**
+   * Synchronous webhook endpoint that processes coordinates fully before responding
+   */
+  @Post('/sync')
+  @UseGuards(AuthGuard)
+  @Version('1')
+  @HttpCode(HTTP_STATUS.OK) // 200 on success, others based on outcome
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Synchronously process coordinates and return results or errors',
+  })
+  @ApiBody({ type: WebhookRequestDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Coordinates processed successfully',
+    type: WebhookResponseDto,
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Overpass API or processing failed',
+  })
+  async webhookRequestSync(
+    @Body(new EnhancedZodValidationPipe(WebhookSchema))
+    coordinates: WebhookRequestDto,
+  ): Promise<WebhookResponseDto> {
+    const { lat, lng, radius = DEFAULT_SEARCH_RADIUS } = coordinates
+    const requestId = uuidv4()
+    this.logger.log(
+      `Synchronously processing webhook request ${requestId} for coordinates: (${coordinates.lat}, ${coordinates.lng})`,
+    )
+
+    try {
+      // First create the webhook request record
+      await this.webhookService.createWebhookRequest(
+        lat,
+        lng,
+        radius,
+        requestId,
+        WebhookType.Sync,
+      )
+
+      // Then process coordinates fully within the request-response cycle
+      await this.landmarksProcessorService.processLandmarksByCoordinates(
+        lat,
+        lng,
+        radius,
+      )
+
+      // Mark the request as completed since we processed it synchronously
+      await this.webhookService.markAsCompleted(requestId)
+
+      // If successful, return a success response
+      return {
+        success: true,
+        requestId,
+        message: 'Coordinates processed successfully',
+      }
+    } catch (error) {
+      // Log the full error for debugging
+      this.logger.error(
+        `Error in synchronous webhook ${requestId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error.stack : undefined,
+      )
+
+      // Mark the request as failed with a generic error message
+      await this.webhookService.markAsFailed(
+        requestId,
+        ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      )
+
+      // Return a clean error response
+      throw new InternalServerErrorException({
+        success: false,
+        requestId,
+        message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      })
     }
   }
 }

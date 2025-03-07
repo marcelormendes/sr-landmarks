@@ -167,7 +167,45 @@ The API is documented using Swagger. Once the application is running, visit `/ap
       "error": "Error message if status is 'failed'" // Only present if status is 'failed'
     }
     ```
-    
+
+- `POST /webhook/sync`
+  - Synchronous webhook endpoint for immediate landmark processing
+  - Requires authentication (Bearer token)
+  - Request Body:
+    ```json
+    {
+      "lat": 40.7128,  // Latitude (required)
+      "lng": -74.0060, // Longitude (required)
+      "radius": 500    // Search radius in meters (optional, defaults to 500)
+    }
+    ```
+  - Returns the processed landmarks immediately:
+    ```json
+    {
+      "requestId": "550e8400-e29b-41d4-a716-446655440000",
+      "success": true,
+      "landmarks": [
+        {
+          "name": "Example Landmark",
+          "type": "attraction",
+          "center": {
+            "lat": 40.7128,
+            "lng": -74.0060
+          },
+          // ... other landmark fields
+        }
+      ]
+    }
+    ```
+  - Error Response:
+    ```json
+    {
+      "requestId": "550e8400-e29b-41d4-a716-446655440000",
+      "success": false,
+      "message": "Internal server error"
+    }
+    ```
+
 ### Authentication
 
 The API uses JWT-based authentication:
@@ -477,6 +515,43 @@ This approach offers several advantages:
 - **Scalability**: Backend can process multiple requests concurrently with multiple workers
 - **Monitoring**: Request status can be tracked throughout the process
 
+### Utility Scripts
+
+The project includes several utility scripts to help with development and testing:
+
+```bash
+# Development with hot reload
+pnpm run start:dev
+
+# Show docker logs
+pnpm run docker:logs
+
+# Show docker logs for first worker
+pnpm run docker:logs:worker1
+
+# Rebuild docker containers
+pnpm run docker:rebuild
+
+# Run Redis CLI for debugging cache
+pnpm run docker:redis-cli
+
+# Show database contents
+pnpm run sqlite:show-db
+
+# Run end-to-end tests with Redis container
+pnpm run test:e2e
+
+# Run all checks (linting, tests, e2e tests)
+pnpm run pre-commit
+```
+
+These scripts help streamline common development tasks:
+- `dev.sh`: Starts the application in development mode with hot reload
+- `redis-cli.sh`: Opens Redis CLI for inspecting cache contents
+- `show-db.sh`: Displays current database contents using SQLite
+- `test-e2e.sh`: Sets up Redis container and runs e2e tests
+- `docker-logs.sh`: Shows docker logs for main api container
+- `run-ci.sh`: Simulate CI pipeline for linting, tests, and e2e tests
 
 ## 📝 License
 

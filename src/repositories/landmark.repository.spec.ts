@@ -14,6 +14,12 @@ describe('LandmarkRepository', () => {
     centerLat: 40.0,
     centerLng: -74.0,
     geohash: 'dr4ur8r',
+    address: null,
+    website: null,
+    openingHours: null,
+    accessibility: null,
+    tourism: null,
+    wiki: null
   }
 
   const mockLandmarks = [mockLandmark]
@@ -56,6 +62,12 @@ describe('LandmarkRepository', () => {
           centerLat: 40.0,
           centerLng: -74.0,
           geohash: 'dr4ur8r',
+          address: null,
+          website: null,
+          openingHours: null,
+          accessibility: null,
+          tourism: null,
+          wiki: null
         },
       ]
 

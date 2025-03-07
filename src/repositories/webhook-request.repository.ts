@@ -1,6 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { PrismaService } from '../services/prisma.service'
-import { WebhookStatus } from '@prisma/client'
+import { WebhookStatus, WebhookType } from '@prisma/client'
+
+interface CreateWebhookRequestData {
+  requestId: string
+  lat: number
+  lng: number
+  radius: number
+  webhookType: WebhookType
+}
 
 @Injectable()
 export class WebhookRequestRepository {
@@ -11,20 +19,22 @@ export class WebhookRequestRepository {
   /**
    * Create a new webhook request record
    */
-  public async createRequest(data: {
-    requestId: string
-    lat: number
-    lng: number
-    radius: number
-  }) {
-    this.logger.debug(`Creating webhook request record: ${data.requestId}`)
+  public async createRequest({
+    requestId,
+    lat,
+    lng,
+    radius,
+    webhookType,
+  }: CreateWebhookRequestData) {
+    this.logger.debug(`Creating webhook request record: ${requestId}`)
 
     return this.prisma.webhookRequest.create({
       data: {
-        requestId: data.requestId,
-        lat: data.lat,
-        lng: data.lng,
-        radius: data.radius,
+        requestId,
+        lat,
+        lng,
+        radius,
+        type: webhookType,
         status: WebhookStatus.Pending,
       },
     })
@@ -67,6 +77,13 @@ export class WebhookRequestRepository {
   public async getById(requestId: string) {
     return this.prisma.webhookRequest.findUnique({
       where: { requestId },
+    })
+  }
+
+  async getRecentRequests(limit = 10) {
+    return this.prisma.webhookRequest.findMany({
+      take: limit,
+      orderBy: { createdAt: 'desc' },
     })
   }
 }

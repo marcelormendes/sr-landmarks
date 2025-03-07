@@ -5,15 +5,13 @@ import { RedisHealthIndicator } from '../controllers/health/redis.health'
 import { QueueHealthIndicator } from '../controllers/health/queue.health'
 import { PrismaModule } from './prisma.module'
 import { BullModule } from '@nestjs/bullmq'
-import { CacheServiceModule } from './cache.module'
 import { Redis } from 'ioredis'
-import { REDIS_CLIENT } from '../app.module'
+import { REDIS_CLIENT } from '../constants/tokens'
 
 @Module({
   imports: [
     TerminusModule,
     PrismaModule,
-    CacheServiceModule, // Import the cache module to get access to Redis
     BullModule.registerQueue({
       name: 'landmarks',
     }),

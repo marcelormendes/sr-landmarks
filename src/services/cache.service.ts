@@ -2,7 +2,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Injectable, Inject, Logger, Optional } from '@nestjs/common'
 import { Cache } from 'cache-manager'
 import { Redis } from 'ioredis'
-import { REDIS_CLIENT } from '../app.module'
+import { REDIS_CLIENT } from '../constants/tokens'
 
 /**
  * Service providing type-safe wrapper around cache operations.
@@ -30,7 +30,7 @@ export class CacheService {
       }
 
       this.logger.debug(`Cache MISS: ${key}`)
-
+      console.log('redisClient', this.redisClient)
       // If cache miss and we have direct Redis access, try that with our prefix
       if (this.redisClient) {
         try {

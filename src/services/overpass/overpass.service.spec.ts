@@ -1,15 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { Logger } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
-import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { OverpassService } from './overpass.service'
-import { OverpassApiClient } from './overpass-api.client'
-import { OverpassQueryBuilder } from './overpass-query.builder'
-import { OverpassResponseProcessor } from './overpass-response.processor'
-import { OverpassApiResponse } from '../../interfaces/overpass.api.response'
 import { CacheService } from '../cache.service'
+import { OverpassPipelineService } from './overpass-pipeline.service'
 import { encodeGeohash } from '../../utils/coordinate.util'
-import { LandmarksTransformerService } from '../landmarks/landmarks-transformer.service'
 
 // Create a mock logger that doesn't log during tests
 const mockLogger = {
@@ -22,7 +16,7 @@ const mockLogger = {
 
 describe('OverpassService', () => {
   let service: OverpassService
-  let apiClient: OverpassApiClient
+  let pipelineService: OverpassPipelineService
   let cacheHandler: CacheService
 
   const mockLandmarks = [
@@ -34,27 +28,16 @@ describe('OverpassService', () => {
     },
   ]
 
-  // Use explicit type casting to match OverpassApiResponse
-  const mockOverpassResponse: OverpassApiResponse = {
-    elements: [
-      {
-        id: 123,
-        type: 'way', // This is now constrained by the type declaration
-        tags: { name: 'Test Landmark', tourism: 'attraction' },
-        center: { lat: 40.1, lon: -74.5 },
-      },
-    ],
-  }
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OverpassService,
-        OverpassApiClient,
-        OverpassQueryBuilder,
-        OverpassResponseProcessor,
-        CacheService,
-        LandmarksTransformerService,
+        {
+          provide: OverpassPipelineService,
+          useValue: {
+            executePipeline: jest.fn(),
+          },
+        },
         {
           provide: CacheService,
           useValue: {
@@ -66,61 +49,11 @@ describe('OverpassService', () => {
           provide: Logger,
           useValue: mockLogger,
         },
-        {
-          provide: ConfigService,
-          useValue: {
-            get: jest.fn().mockImplementation((key) => {
-              if (key === 'overpass.url')
-                return 'https://overpass-api.de/api/interpreter'
-              if (key === 'overpass.timeout') return 30000
-              if (key === 'overpass.maxRetries') return 3
-              return undefined
-            }),
-          },
-        },
-        {
-          provide: CACHE_MANAGER,
-          useValue: {
-            get: jest.fn(),
-            set: jest.fn(),
-          },
-        },
-        {
-          provide: 'CacheService',
-          useValue: {
-            get: jest.fn(),
-            set: jest.fn(),
-          },
-        },
-        {
-          provide: 'LandmarksTransformerService',
-          useValue: {
-            transformLandmarks: jest.fn().mockReturnValue(mockLandmarks),
-          },
-        },
       ],
-    })
-      .overrideProvider(OverpassApiClient)
-      .useValue({
-        makeRequestWithRetry: jest.fn(),
-      })
-      .overrideProvider(OverpassQueryBuilder)
-      .useValue({
-        buildQuery: jest.fn().mockReturnValue('mock query'),
-      })
-      .overrideProvider(OverpassResponseProcessor)
-      .useValue({
-        processResponse: jest.fn().mockReturnValue(mockLandmarks),
-      })
-      .overrideProvider(CacheService)
-      .useValue({
-        get: jest.fn(),
-        set: jest.fn(),
-      })
-      .compile()
+    }).compile()
 
     service = module.get<OverpassService>(OverpassService)
-    apiClient = module.get<OverpassApiClient>(OverpassApiClient)
+    pipelineService = module.get<OverpassPipelineService>(OverpassPipelineService)
     cacheHandler = module.get<CacheService>(CacheService)
   })
 
@@ -141,30 +74,34 @@ describe('OverpassService', () => {
 
       expect(cacheHandler.get).toHaveBeenCalled()
       expect(result).toEqual(mockLandmarks)
-      expect(apiClient.makeRequestWithRetry).not.toHaveBeenCalled()
+      expect(pipelineService.executePipeline).not.toHaveBeenCalled()
     })
 
     it('should fetch landmarks from Overpass API if not in cache', async () => {
       jest.spyOn(cacheHandler, 'get').mockResolvedValue(undefined)
       jest
-        .spyOn(apiClient, 'makeRequestWithRetry')
-        .mockResolvedValue(mockOverpassResponse)
+        .spyOn(pipelineService, 'executePipeline')
+        .mockResolvedValue(mockLandmarks)
 
       const result = await service.findNearbyLandmarks(lat, lng, radius, geohash)
 
       expect(cacheHandler.get).toHaveBeenCalled()
-      expect(apiClient.makeRequestWithRetry).toHaveBeenCalledWith('mock query')
-      expect(cacheHandler.set).toHaveBeenCalled()
+      expect(pipelineService.executePipeline).toHaveBeenCalledWith(
+        lat,
+        lng,
+        radius,
+      )
       expect(result).toEqual(mockLandmarks)
     })
 
     it('should handle API errors and throw', async () => {
+      jest.spyOn(cacheHandler, 'get').mockResolvedValue(undefined)
       jest
-        .spyOn(apiClient, 'makeRequestWithRetry')
+        .spyOn(pipelineService, 'executePipeline')
         .mockRejectedValue(new Error('API error'))
 
       await expect(
-        service.findNearbyLandmarks(lat, lng, radius, geohash)
+        service.findNearbyLandmarks(lat, lng, radius, geohash),
       ).rejects.toThrow('API error')
     })
   })

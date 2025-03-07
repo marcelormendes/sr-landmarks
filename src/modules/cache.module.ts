@@ -1,38 +1,53 @@
-import { Module } from '@nestjs/common'
+import { Global, Module } from '@nestjs/common'
 import { CacheService } from '../services/cache.service'
-import { ConfigModule } from '@nestjs/config'
-import { REDIS_CLIENT } from '../app.module'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { Redis } from 'ioredis'
+import { REDIS_CLIENT } from '../constants/tokens'
 
 /**
- * Module providing enhanced cache functionality
- * Builds on top of NestJS CacheModule with additional features
+ * Global module providing enhanced cache functionality
+ * Provides both CacheService and Redis client
  */
+@Global()
 @Module({
-  imports: [
-    ConfigModule, // For configuration access
-  ],
+  imports: [ConfigModule],
   providers: [
     CacheService,
-    // Provide a fallback Redis client in case the global one is not available
     {
       provide: REDIS_CLIENT,
-      useFactory: () => {
-        try {
-          console.log('Creating fallback Redis client in CacheServiceModule')
-          const redisHost = process.env.REDIS_HOST || 'localhost'
-          const redisPort = parseInt(process.env.REDIS_PORT || '6379')
+      useFactory: (configService: ConfigService) => {
+        const redisHost = configService.get<string>('REDIS_HOST') || 'localhost'
+        const redisPort = parseInt(
+          configService.get<string>('REDIS_PORT') || '6379',
+        )
 
-          return new Redis({
-            host: redisHost,
-            port: redisPort,
-            maxRetriesPerRequest: 3,
-          })
-        } catch (error) {
-          console.error('Failed to create fallback Redis client:', error)
-          return undefined
-        }
+        console.log(`Creating Redis client: ${redisHost}:${redisPort}`)
+
+        const redis = new Redis({
+          host: redisHost,
+          port: redisPort,
+          maxRetriesPerRequest: 5,
+          retryStrategy: (times) => {
+            console.log(`Redis connection retry #${times}`)
+            return Math.min(times * 100, 3000)
+          },
+          reconnectOnError: (err) => {
+            console.log(`Redis connection error: ${err.message}`)
+            return true
+          },
+        })
+
+        redis.on('connect', () => {
+          console.log('Redis client connected')
+        })
+
+        redis.on('error', (err) => {
+          console.error(`Redis client error: ${err.message}`)
+        })
+
+        return redis
       },
+      inject: [ConfigService],
     },
   ],
   exports: [CacheService, REDIS_CLIENT],

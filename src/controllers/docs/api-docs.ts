@@ -1,5 +1,5 @@
 import { HttpStatus } from '@nestjs/common'
-import { LandmarkDto } from '../../dto/landmark.dto'
+import { LandmarkDtoApi } from '../../dto/landmark.dto'
 
 /**
  * API documentation for the Landmarks endpoints
@@ -36,7 +36,7 @@ export const LandmarksApiDocs = {
     OK: {
       status: HttpStatus.OK,
       description: 'Landmarks retrieved successfully',
-      type: LandmarkDto,
+      type: LandmarkDtoApi,
       isArray: true,
     },
     NOT_FOUND: {

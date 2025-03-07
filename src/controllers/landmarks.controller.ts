@@ -1,7 +1,7 @@
 import { Controller, Get, Query, Logger, HttpCode } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger'
 import { LandmarksService } from '../services/landmarks/landmarks.service'
-import { LandmarkDto } from '../dto/landmark.dto'
+import { LandmarkDto, LandmarkDtoApi } from '../dto/landmark.dto'
 import { EnhancedZodValidationPipe } from '../schemas/pipes/zod-validation.pipe'
 import { LandmarksApiDocs } from './docs/api-docs'
 import { HTTP_STATUS } from '../constants'
@@ -30,7 +30,7 @@ export class LandmarksController {
   @ApiResponse({
     status: 200,
     description: 'Landmarks retrieved successfully',
-    type: LandmarkDto,
+    type: LandmarkDtoApi,
     isArray: true,
   })
   @ApiResponse(LandmarksApiDocs.RESPONSES.NOT_FOUND)

@@ -40,18 +40,15 @@ services:
     networks:
       - app-network
     restart: unless-stopped
-    # Store SQLite database as a volume
     volumes:
-      - db_data:/app/prisma
+      - prisma_tmp:/app/prisma
 
-  # Dedicated worker instances for queue processing
   worker:
     build:
       context: .
       dockerfile: Dockerfile
       args:
         - ENTRY_FILE=worker.js
-    # Run multiple worker replicas for scalability
     deploy:
       replicas: 2
     depends_on:
@@ -72,10 +69,8 @@ services:
     networks:
       - app-network
     restart: unless-stopped
-    # Share the same database as the API
     volumes:
-      - db_data:/app/prisma
-    command: node dist/worker.js
+      - prisma_tmp:/app/prisma
 
 networks:
   app-network:
@@ -83,4 +78,4 @@ networks:
 
 volumes:
   redis_data:
-  db_data:
+  prisma_tmp:

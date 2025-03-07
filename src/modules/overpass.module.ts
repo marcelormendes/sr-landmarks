@@ -5,9 +5,9 @@ import {
   OverpassApiClient,
   OverpassQueryBuilder,
   OverpassResponseProcessor,
+  OverpassPipelineService,
 } from '../services/overpass'
 import { CacheServiceModule } from './cache.module'
-import { LandmarksTransformerService } from '../services/landmarks/landmarks-transformer.service'
 
 /**
  * Module for handling Overpass API integration.
@@ -18,11 +18,11 @@ import { LandmarksTransformerService } from '../services/landmarks/landmarks-tra
   imports: [ConfigModule, CacheServiceModule],
   providers: [
     Logger,
-    OverpassService,
     OverpassApiClient,
     OverpassQueryBuilder,
     OverpassResponseProcessor,
-    LandmarksTransformerService,
+    OverpassPipelineService,
+    OverpassService,
   ],
   exports: [OverpassService],
 })

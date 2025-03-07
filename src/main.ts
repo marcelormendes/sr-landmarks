@@ -4,10 +4,14 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { ZodValidationPipe } from 'nestjs-zod'
 import { ConfigService } from '@nestjs/config'
 import { GlobalExceptionFilter } from './exceptions/http-exception.filter'
-import { Logger, ValidationPipe } from '@nestjs/common'
+import { Logger, VersioningType } from '@nestjs/common'
 import { json, urlencoded } from 'express'
 import helmet from 'helmet'
-import { LandmarkDto, LandmarkLocationDto } from './dto/landmark.dto'
+import {
+  LandmarkDtoApi,
+  LandmarkLocationDtoApi,
+  MoreInfoDtoApi,
+} from './dto/landmark.dto'
 import {
   WebhookRequestDto,
   WebhookResponseDto,
@@ -25,12 +29,23 @@ async function bootstrap() {
   // Enable shutdown hooks
   app.enableShutdownHooks()
 
+  // Set global prefix for all routes
+  app.enableVersioning({
+    type: VersioningType.URI,
+    prefix: 'v',
+    defaultVersion: '1', // Keep v1 as default for backward compatibility
+  })
+
   // Get config service
   const configService = app.get(ConfigService)
   const isDevelopment = configService.get('env') !== 'production'
 
-  // Apply security headers with Helmet
-  app.use(helmet())
+  // Apply security headers with Helmet with custom configuration
+  app.use(
+    helmet({
+      contentSecurityPolicy: isDevelopment ? false : undefined,
+    }),
+  )
 
   // Configure validation pipe
   // We use Zod for schema-based validation instead of class-validator/class-transformer
@@ -57,8 +72,9 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config, {
     extraModels: [
-      LandmarkDto,
-      LandmarkLocationDto,
+      LandmarkDtoApi,
+      MoreInfoDtoApi,
+      LandmarkLocationDtoApi,
       WebhookRequestDto,
       WebhookResponseDto,
       WebhookStatusDto,
@@ -85,6 +101,14 @@ async function bootstrap() {
     methods: ['GET', 'POST'],
     credentials: true,
     maxAge: 3600,
+  })
+
+  // Debug: Log all registered routes using Swagger document
+  console.log('\nRegistered Routes:')
+  const paths = Object.keys(document.paths)
+  paths.forEach((path) => {
+    const methods = Object.keys(document.paths[path])
+    console.log(`${methods.map((m) => m.toUpperCase()).join(',')} ${path}`)
   })
 
   // Start server
