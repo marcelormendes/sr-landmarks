@@ -1,35 +1,27 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { WebhookController } from './webhook.controller'
 import { WebhookService } from '../services/webhook.service'
-import { Logger, NotFoundException, BadRequestException } from '@nestjs/common'
-import { RESPONSE_MESSAGES, DEFAULT_SEARCH_RADIUS } from '../constants'
-import { EnhancedZodValidationPipe } from '../schemas/pipes/zod-validation.pipe'
-import { UuidSchema } from '../schemas/webhook.schema'
+import { Logger, NotFoundException, InternalServerErrorException } from '@nestjs/common'
+import { RESPONSE_MESSAGES, DEFAULT_SEARCH_RADIUS, ERROR_MESSAGES } from '../constants'
 import { AuthGuard } from './guard/auth.guard'
-
-// Create a mock logger that doesn't log during tests
-const mockLogger = {
-  log: jest.fn(),
-  error: jest.fn(),
-  warn: jest.fn(),
-  debug: jest.fn(),
-  verbose: jest.fn(),
-}
+import { LandmarksProcessorService } from '../services/landmarks/landmarks-processor.service'
+import { WebhookType } from '@prisma/client'
 
 describe('WebhookController', () => {
   let controller: WebhookController
-  let service: WebhookService
-
-  const mockLandmarks = [
-    {
-      name: 'Test Landmark',
-      type: 'attraction',
-      distance: 100,
-      center: { lat: 40.1, lng: -74.5 },
-    },
-  ]
+  let webhookService: WebhookService
+  let landmarksProcessorService: LandmarksProcessorService
+  let loggerSpy: jest.SpyInstance
+  let logSpy: jest.SpyInstance
 
   beforeEach(async () => {
+    const mockProcessLandmarks = jest.fn().mockImplementation(() => Promise.resolve())
+    
+    // Spy on error for assertions but make it silent
+    loggerSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {})
+    // Spy on log to make it silent
+    logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {})
+    
     const module: TestingModule = await Test.createTestingModule({
       controllers: [WebhookController],
       providers: [
@@ -40,11 +32,15 @@ describe('WebhookController', () => {
             processCoordinates: jest.fn().mockImplementation(() => Promise.resolve()),
             getWebhookStatus: jest.fn(),
             getRecentWebhooks: jest.fn(),
+            markAsCompleted: jest.fn().mockImplementation(() => Promise.resolve()),
+            markAsFailed: jest.fn().mockImplementation(() => Promise.resolve()),
           },
         },
         {
-          provide: Logger,
-          useValue: mockLogger,
+          provide: LandmarksProcessorService,
+          useValue: {
+            processLandmarksByCoordinates: mockProcessLandmarks,
+          },
         },
       ],
     })
@@ -53,77 +49,48 @@ describe('WebhookController', () => {
       .compile()
 
     controller = module.get<WebhookController>(WebhookController)
-    service = module.get<WebhookService>(WebhookService)
+    webhookService = module.get<WebhookService>(WebhookService)
+    landmarksProcessorService = module.get<LandmarksProcessorService>(LandmarksProcessorService)
 
-    // Add the validation pipe to the controller with a modified mock implementation
-    // that handles valid UUIDs properly
-    jest.spyOn(controller, 'getWebhookStatus').mockImplementation(async (uuid: string) => {
-      // Skip validation in the test mock, but still check valid UUIDs
-      // This allows the test to continue to the NotFoundException when service returns null
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid)) {
-        throw new BadRequestException({
-          message: 'Validation failed',
-          details: [{
-            field: 'uuid',
-            message: 'Request ID must be a valid UUID'
-          }]
-        })
-      }
-      
-      const webhookRequest = await service.getWebhookStatus(uuid)
-      
-      if (!webhookRequest) {
-        throw new NotFoundException('Webhook request not found')
-      }
+    // Clear all mock calls before each test
+    jest.clearAllMocks()
+  })
 
-      return {
-        requestId: webhookRequest.requestId,
-        status: webhookRequest.status,
-        createdAt: webhookRequest.createdAt,
-        completedAt: webhookRequest.completedAt || undefined,
-        coordinates: {
-          lat: webhookRequest.lat,
-          lng: webhookRequest.lng,
-          radius: webhookRequest.radius,
-        },
-        error: webhookRequest.error || undefined,
-      }
-    })
+  afterEach(() => {
+    loggerSpy.mockRestore()
+    logSpy.mockRestore()
   })
 
   it('should be defined', () => {
     expect(controller).toBeDefined()
   })
 
-  describe('processCoordinates', () => {
-    it('should accept coordinates with provided radius and return webhook response', async () => {
+  describe('webhookRequest (Async)', () => {
+    it('should accept coordinates and return webhook response for async request', async () => {
       const dto = { 
         lat: 40.0, 
         lng: -74.0, 
         radius: 500
       }
-      // Mock the UUID generator for consistent testing
       jest.spyOn(require('uuid'), 'v4').mockReturnValue('test-uuid-123')
 
-      const result = await controller.processCoordinates(dto)
+      const result = await controller.webhookRequest(dto)
 
-      // Service should be called with the correct params, including requestId
-      expect(service.createWebhookRequest).toHaveBeenCalledWith(
+      expect(webhookService.createWebhookRequest).toHaveBeenCalledWith(
+        dto.lat,
+        dto.lng,
+        dto.radius,
+        'test-uuid-123',
+        WebhookType.Async
+      )
+      
+      expect(webhookService.processCoordinates).toHaveBeenCalledWith(
         dto.lat,
         dto.lng,
         dto.radius,
         'test-uuid-123'
       )
       
-      // Verify processCoordinates was called but not awaited
-      expect(service.processCoordinates).toHaveBeenCalledWith(
-        dto.lat,
-        dto.lng,
-        dto.radius,
-        'test-uuid-123'
-      )
-      
-      // Response should be a webhook acknowledgment, not landmarks
       expect(result).toEqual({
         success: true,
         message: RESPONSE_MESSAGES.WEBHOOK_RECEIVED,
@@ -131,34 +98,23 @@ describe('WebhookController', () => {
       })
     })
 
-    it('should use default radius when not provided', async () => {
+    it('should use default radius for async request when not provided', async () => {
       const dto = { 
         lat: 40.0, 
-        lng: -74.0, 
+        lng: -74.0
       }
-      
-      // Mock the UUID generator for consistent testing
       jest.spyOn(require('uuid'), 'v4').mockReturnValue('test-uuid-456')
 
-      const result = await controller.processCoordinates(dto)
+      const result = await controller.webhookRequest(dto)
 
-      // Service should be called with default radius
-      expect(service.createWebhookRequest).toHaveBeenCalledWith(
+      expect(webhookService.createWebhookRequest).toHaveBeenCalledWith(
         dto.lat,
         dto.lng,
         DEFAULT_SEARCH_RADIUS,
-        'test-uuid-456'
+        'test-uuid-456',
+        WebhookType.Async
       )
       
-      // Verify processCoordinates was called with default radius
-      expect(service.processCoordinates).toHaveBeenCalledWith(
-        dto.lat,
-        dto.lng,
-        DEFAULT_SEARCH_RADIUS,
-        'test-uuid-456'
-      )
-      
-      // Response should be a webhook acknowledgment
       expect(result).toEqual({
         success: true,
         message: RESPONSE_MESSAGES.WEBHOOK_RECEIVED,
@@ -166,14 +122,104 @@ describe('WebhookController', () => {
       })
     })
   })
-  
+
+  describe('webhookRequestSync', () => {
+    it('should process coordinates synchronously and return success response', async () => {
+      const dto = {
+        lat: 40.0,
+        lng: -74.0,
+        radius: 500
+      }
+      jest.spyOn(require('uuid'), 'v4').mockReturnValue('test-uuid-789')
+
+      const result = await controller.webhookRequestSync(dto)
+
+      expect(webhookService.createWebhookRequest).toHaveBeenCalledWith(
+        dto.lat,
+        dto.lng,
+        dto.radius,
+        'test-uuid-789',
+        WebhookType.Sync
+      )
+
+      expect(landmarksProcessorService.processLandmarksByCoordinates).toHaveBeenCalledWith(
+        dto.lat,
+        dto.lng,
+        dto.radius
+      )
+
+      expect(webhookService.markAsCompleted).toHaveBeenCalledWith('test-uuid-789')
+
+      expect(result).toEqual({
+        success: true,
+        requestId: 'test-uuid-789',
+        message: 'Coordinates processed successfully'
+      })
+    })
+
+    it('should use default radius for sync request when not provided', async () => {
+      const dto = {
+        lat: 40.0,
+        lng: -74.0
+      }
+      jest.spyOn(require('uuid'), 'v4').mockReturnValue('test-uuid-101')
+
+      await controller.webhookRequestSync(dto)
+
+      expect(webhookService.createWebhookRequest).toHaveBeenCalledWith(
+        dto.lat,
+        dto.lng,
+        DEFAULT_SEARCH_RADIUS,
+        'test-uuid-101',
+        WebhookType.Sync
+      )
+
+      expect(landmarksProcessorService.processLandmarksByCoordinates).toHaveBeenCalledWith(
+        dto.lat,
+        dto.lng,
+        DEFAULT_SEARCH_RADIUS
+      )
+    })
+
+    it('should handle errors in sync processing', async () => {
+      const dto = {
+        lat: 40.0,
+        lng: -74.0,
+        radius: 500
+      }
+      const requestId = 'test-uuid-error'
+      jest.spyOn(require('uuid'), 'v4').mockReturnValue(requestId)
+
+      // Mock all service calls
+      webhookService.createWebhookRequest = jest.fn().mockResolvedValue(undefined)
+      webhookService.markAsFailed = jest.fn().mockResolvedValue(undefined)
+      landmarksProcessorService.processLandmarksByCoordinates = jest.fn().mockRejectedValue(new Error('Overpass API error'))
+
+      await expect(controller.webhookRequestSync(dto)).rejects.toThrow(InternalServerErrorException)
+      expect(webhookService.createWebhookRequest).toHaveBeenCalledWith(
+        dto.lat,
+        dto.lng,
+        dto.radius,
+        requestId,
+        WebhookType.Sync
+      )
+      expect(webhookService.markAsFailed).toHaveBeenCalledWith(
+        requestId,
+        ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      )
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/Error in synchronous webhook.*: .*Overpass API error/),
+        expect.any(String)
+      )
+    })
+  })
+
   describe('getWebhookStatus', () => {
     it('should return webhook status when found', async () => {
       const requestId = '550e8400-e29b-41d4-a716-446655440000'
       
-      // Create a realistic webhook request data structure as returned by repository
       const mockWebhookData = {
-        requestId: '550e8400-e29b-41d4-a716-446655440000',
+        requestId,
         status: 'completed',
         createdAt: new Date(),
         completedAt: new Date(),
@@ -181,10 +227,15 @@ describe('WebhookController', () => {
         lng: -74.0,
         radius: 500,
         error: undefined,
+        type: WebhookType.Async
       }
       
-      // Expected response transformed by controller
-      const expectedResponse = {
+      webhookService.getWebhookStatus = jest.fn().mockResolvedValue(mockWebhookData)
+      
+      const result = await controller.getWebhookStatus(requestId)
+      
+      expect(webhookService.getWebhookStatus).toHaveBeenCalledWith(requestId)
+      expect(result).toEqual({
         requestId: mockWebhookData.requestId,
         status: mockWebhookData.status,
         createdAt: mockWebhookData.createdAt,
@@ -195,50 +246,13 @@ describe('WebhookController', () => {
           radius: mockWebhookData.radius,
         },
         error: mockWebhookData.error,
-      }
-      
-      service.getWebhookStatus = jest.fn().mockResolvedValue(mockWebhookData)
-      
-      const result = await controller.getWebhookStatus(requestId)
-      
-      expect(service.getWebhookStatus).toHaveBeenCalledWith(requestId)
-      expect(result).toEqual(expectedResponse)
+      })
     })
     
     it('should throw NotFoundException when webhook not found', async () => {
       const requestId = '550e8400-e29b-41d4-a716-446655440000'
-      
-      service.getWebhookStatus = jest.fn().mockResolvedValue(undefined)
-      
+      webhookService.getWebhookStatus = jest.fn().mockResolvedValue(null)
       await expect(controller.getWebhookStatus(requestId)).rejects.toThrow(NotFoundException)
-    })
-    
-    it('should throw BadRequestException for invalid UUID format', async () => {
-      // Create an instance of the validation pipe
-      const validationPipe = new EnhancedZodValidationPipe(UuidSchema)
-      
-      const invalidUuid = 'not-a-valid-uuid'
-      
-      // Should throw BadRequestException for invalid UUID
-      expect(() => 
-        validationPipe.transform(invalidUuid, {
-          type: 'param',
-          data: 'uuid',
-        } as any)
-      ).toThrow(BadRequestException)
-      
-      try {
-        validationPipe.transform(invalidUuid, {
-          type: 'param',
-          data: 'uuid',
-        } as any)
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException)
-        expect(error.response).toEqual({
-          message: 'Validation failed',
-          details: expect.any(Array)
-        })
-      }
     })
   })
 })

@@ -13,7 +13,9 @@ export class EnhancedZodValidationPipe implements PipeTransform {
   private readonly logger = createTestSafeLogger(EnhancedZodValidationPipe.name)
 
   constructor(private schema: ZodSchema) {
-    this.logger.debug(`Creating validation pipe with schema: ${schema.description || 'unnamed schema'}`)
+    this.logger.debug(
+      `Creating validation pipe with schema: ${schema.description || 'unnamed schema'}`,
+    )
   }
 
   transform(value: unknown, _metadata: ArgumentMetadata): unknown {
@@ -38,8 +40,10 @@ export class EnhancedZodValidationPipe implements PipeTransform {
 
       // For objects, handle as before
       const objValue = value as { constructor?: { name?: string } }
-      this.logger.debug(`Processing object of type: ${objValue.constructor?.name}`)
-      
+      this.logger.debug(
+        `Processing object of type: ${objValue.constructor?.name}`,
+      )
+
       const rawValue =
         objValue.constructor?.name === 'Object'
           ? value
@@ -49,7 +53,9 @@ export class EnhancedZodValidationPipe implements PipeTransform {
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const result = this.schema.parse(rawValue)
-      this.logger.debug(`Validation successful, result: ${JSON.stringify(result)}`)
+      this.logger.debug(
+        `Validation successful, result: ${JSON.stringify(result)}`,
+      )
       return result
     } catch (error: unknown) {
       if (error instanceof ZodError) {

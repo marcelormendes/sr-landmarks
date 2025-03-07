@@ -273,4 +273,102 @@ describe('Landmarks API (e2e)', () => {
       }
     })
   })
+
+  describe('Webhook Endpoints', () => {
+    const testCoordinates = {
+      lat: 51.5074,
+      lng: -0.1278,
+      radius: 500
+    }
+
+    describe('POST /webhook (Async)', () => {
+      it('should accept webhook request and return 202', async () => {
+        const response = await request(app.getHttpServer())
+          .post('/webhook')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(testCoordinates)
+          .expect(202)
+
+        expect(response.body).toHaveProperty('success', true)
+        expect(response.body).toHaveProperty('requestId')
+        expect(response.body).toHaveProperty('message')
+
+        // Verify webhook status
+        const statusResponse = await request(app.getHttpServer())
+          .get(`/webhook/${response.body.requestId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .expect(200)
+
+        expect(statusResponse.body).toHaveProperty('status')
+        expect(statusResponse.body.coordinates).toEqual(testCoordinates)
+      })
+
+      it('should return 401 without auth token', () => {
+        return request(app.getHttpServer())
+          .post('/webhook')
+          .send(testCoordinates)
+          .expect(401)
+      })
+    })
+
+    describe('POST /webhook/sync', () => {
+      it('should process webhook synchronously and return 200', async () => {
+        const response = await request(app.getHttpServer())
+          .post('/webhook/sync')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(testCoordinates)
+          .expect(200)
+
+        expect(response.body).toHaveProperty('success', true)
+        expect(response.body).toHaveProperty('requestId')
+        expect(response.body).toHaveProperty('message')
+
+        // Verify webhook status shows completed
+        const statusResponse = await request(app.getHttpServer())
+          .get(`/webhook/${response.body.requestId}`)
+          .set('Authorization', `Bearer ${accessToken}`)
+          .expect(200)
+
+        expect(statusResponse.body).toHaveProperty('status', 'Completed')
+        expect(statusResponse.body.coordinates).toEqual(testCoordinates)
+        expect(statusResponse.body).toHaveProperty('completedAt')
+      })
+
+      it('should return 401 without auth token', () => {
+        return request(app.getHttpServer())
+          .post('/webhook/sync')
+          .send(testCoordinates)
+          .expect(401)
+      })
+
+      it('should validate input parameters', () => {
+        const invalidCoordinates = {
+          lat: 'invalid',
+          lng: -0.1278
+        }
+
+        return request(app.getHttpServer())
+          .post('/webhook/sync')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send(invalidCoordinates)
+          .expect(400)
+      })
+    })
+
+    describe('GET /webhook/:uuid', () => {
+      it('should return 404 for non-existent webhook', () => {
+        return request(app.getHttpServer())
+          .get('/webhook/550e8400-e29b-41d4-a716-446655440000')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .expect(404)
+      })
+
+      it('should return 400 for invalid UUID', () => {
+        return request(app.getHttpServer())
+          .get('/webhook/invalid-uuid')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .expect(400)
+      })
+    })
+  })
 })

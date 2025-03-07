@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Install OpenSSL and other required dependencies
 RUN apt-get update -y && \
-    apt-get install -y openssl libssl1.1 && \
+    apt-get install -y openssl libssl1.1 sqlite3 redis-tools && \
     rm -rf /var/lib/apt/lists/*
 
 # Install pnpm globally as root
@@ -15,6 +15,43 @@ RUN npm install -g pnpm
 # Create non-root user
 RUN adduser --disabled-password --gecos "" nodejs && \
     chown nodejs:nodejs /app
+
+# Create the entrypoint script
+COPY --chown=nodejs:nodejs <<'EOF' /app/docker-entrypoint.sh
+#!/bin/bash
+set -e
+
+# Function to wait for Redis
+wait_for_redis() {
+  echo "Waiting for Redis..."
+  while ! redis-cli -h $REDIS_HOST ping > /dev/null 2>&1; do
+    sleep 1
+  done
+  echo "Redis is up!"
+}
+
+# Initialize the database if we're the first instance
+init_database() {
+  if [ "$SERVICE_TYPE" = "api" ] || [ "$SERVICE_TYPE" = "worker" ] && [ ! -f /app/prisma/.init-complete ]; then
+    echo "Initializing database..."
+    rm -f /app/prisma/dev.db
+    redis-cli -h $REDIS_HOST FLUSHALL
+    pnpm prisma migrate reset --force
+    touch /app/prisma/.init-complete
+    echo "Database initialization complete!"
+  fi
+}
+
+# Main startup sequence
+wait_for_redis
+init_database
+
+# Start the application
+echo "Starting $SERVICE_TYPE service..."
+exec node "dist/${ENTRY_FILE}"
+EOF
+
+RUN chmod +x /app/docker-entrypoint.sh
 
 # Switch to non-root user
 USER nodejs
@@ -45,5 +82,5 @@ EXPOSE 3000 3100
 # Set NODE_ENV to production
 ENV NODE_ENV=production
 
-# Command to run the application (configurable via docker-compose)
-CMD ["sh", "-c", "node dist/${ENTRY_FILE}"]
+# Use the entrypoint script
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

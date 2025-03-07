@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common'
-import { LandmarkDto, MoreInfoDto } from '../../dto/landmark.dto'
 import {
   OverpassResponse,
   OverpassElement,
@@ -10,15 +9,16 @@ import {
   OVERPASS_TAGS,
   OVERPASS_ADDRESS_TAGS,
 } from '../../constants/overpass.constants'
+import { LandmarkDto, MoreInfoDto } from '../../dto/landmark.dto'
 
 /**
  * Processor for handling Overpass API responses.
- * Transforms raw API responses into application-specific landmark objects.
+ * Transforms raw API responses into a standardized format.
  */
 @Injectable()
 export class OverpassResponseProcessor {
   /**
-   * Processes the response from the Overpass API into an array of landmarks
+   * Processes the response from the Overpass API into an array of processed elements
    */
   public processResponse(response: OverpassResponse): LandmarkDto[] {
     return this.removeDuplicates(response.elements)
@@ -51,7 +51,7 @@ export class OverpassResponseProcessor {
   }
 
   /**
-   * Transforms a single Overpass element into a LandmarkDto
+   * Transforms a single Overpass element into a processed element
    */
   private processElement(element: OverpassElement): LandmarkDto {
     const tags = element.tags || {}
@@ -81,16 +81,10 @@ export class OverpassResponseProcessor {
   }
 
   /**
-   * Creates optional fields for the landmark
+   * Creates optional fields for the element
    */
-  private createOptionalFields(
-    tags: Record<string, string>,
-  ): Partial<MoreInfoDto> {
-    // Create an object with all potential fields
-    const optionalFields: Partial<MoreInfoDto> = {
-      ...((tags[OVERPASS_TAGS.WIKIPEDIA] || tags[OVERPASS_TAGS.WIKIDATA]) && {
-        wiki: this.buildWikiUrl(tags),
-      }),
+  private createOptionalFields(tags: Record<string, string>): MoreInfoDto {
+    const optionalFields: MoreInfoDto = {
       ...(tags[OVERPASS_TAGS.WEBSITE] && {
         website: tags[OVERPASS_TAGS.WEBSITE],
       }),
@@ -103,16 +97,18 @@ export class OverpassResponseProcessor {
       ...(tags[OVERPASS_TAGS.TOURISM] && {
         tourism: tags[OVERPASS_TAGS.TOURISM],
       }),
+      ...((tags[OVERPASS_TAGS.WIKIPEDIA] || tags[OVERPASS_TAGS.WIKIDATA]) && {
+        wiki: this.buildWikiUrl(tags),
+      }),
     }
 
     return optionalFields
   }
 
   /**
-   * Determines the type of landmark
+   * Determines the type of element
    */
   private determineType(tags: Record<string, string>): string {
-    // Find the first matching type key in our hierarchy
     const typeKey = OVERPASS_TYPE_HIERARCHY.find((key) => Boolean(tags[key]))
     return typeKey ? tags[typeKey] : DEFAULT_LANDMARK_TYPE
   }
@@ -123,15 +119,11 @@ export class OverpassResponseProcessor {
   private buildAddress(tags: Record<string, string>): string | undefined {
     const { STREET, HOUSE_NUMBER, CITY, POSTCODE } = OVERPASS_ADDRESS_TAGS
 
-    // Create array of address components
     const addressParts = [
-      // Street with house number if available
       tags[STREET] && `${tags[STREET]} ${tags[HOUSE_NUMBER] || ''}`.trim(),
-      // City if available
       tags[CITY],
-      // Postcode if available
       tags[POSTCODE],
-    ].filter(Boolean) // Filter out any undefined/empty values
+    ].filter(Boolean)
 
     return addressParts.length > 0 ? addressParts.join(', ') : undefined
   }

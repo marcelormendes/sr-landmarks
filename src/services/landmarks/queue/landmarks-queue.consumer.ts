@@ -100,10 +100,7 @@ export class LandmarksQueueConsumer extends WorkerHost {
    */
   @OnWorkerEvent('error')
   onError(err: Error) {
-    this.logger.error(
-      `Worker ${this.workerId} error: ${err.message}`,
-      err.stack,
-    )
+    this.logger.error(`Worker ${this.workerId} encountered an error`, err.stack)
   }
 
   /**

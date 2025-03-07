@@ -34,4 +34,27 @@ export const LandmarksSchema = z
   })
   .describe('coordinate-query-schema')
 
+// Define the location schema
+export const LandmarkLocationSchemaDto = z.object({
+  lat: z.number(),
+  lng: z.number(),
+})
+
+export const moreInfoSchemaDto = z.object({
+  wikipedia: z.string().optional(),
+  website: z.string().optional(),
+  openingHours: z.string().optional(),
+  accessibility: z.string().optional(),
+  tourism: z.string().optional(),
+})
+
+// Define the landmark schema
+export const LandmarkSchemaDto = z.object({
+  name: z.string(),
+  type: z.string(),
+  center: LandmarkLocationSchemaDto,
+  address: z.string().optional(),
+  moreInfo: moreInfoSchemaDto.optional(),
+})
+
 export type LandmarkLocation = z.infer<typeof LandmarksSchema>

@@ -59,6 +59,10 @@ async function bootstrap() {
 
 // Add void to indicate we're intentionally not waiting for bootstrap
 void bootstrap().catch((err) => {
-  console.error('Error during bootstrap:', err)
+  const error = err as Error
+  Logger.error(
+    'Worker failed to start: An unexpected error occurred',
+    error.stack,
+  )
   process.exit(1)
 })
