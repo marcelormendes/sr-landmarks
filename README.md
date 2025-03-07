@@ -460,23 +460,6 @@ For advanced configuration options, check the `src/config/configuration.ts` file
 
 ## 🛠️ Development
 
-### Queue System & Worker Architecture
-
-The application uses a robust queue system with BullMQ for processing webhook requests:
-
-1. **Message Queue**: Uses Redis as a reliable message broker with BullMQ
-2. **Worker Architecture**: Multiple worker processes consume jobs from the queue
-3. **Job Lifecycle**: Each job goes through a defined lifecycle with proper error handling
-4. **Automatic Retries**: Failed jobs are automatically retried with exponential backoff
-5. **Distributed Processing**: Workers can be horizontally scaled across multiple containers
-
-Benefits of this queue-based architecture:
-- **Reliability**: Messages are persisted in Redis and won't be lost if the system crashes
-- **Scalability**: Can handle high throughput by adding more worker instances
-- **Resilience**: Automatic retries and failure handling
-- **Load Distribution**: Evenly distributes work across available workers
-- **Monitoring**: Comprehensive job status tracking and worker health monitoring
-
 ### Worker Configuration
 
 Workers are configured in the docker-compose.yml file:
@@ -498,22 +481,6 @@ To scale workers:
 - Use `docker-compose up --scale worker=5` to dynamically adjust worker count
 - Each worker has a unique ID for tracking in distributed environments
 
-### Asynchronous Webhook Processing
-
-The application implements an asynchronous processing pattern for the webhook endpoint:
-
-1. **Request Submission**: Client submits coordinates via the `/webhook` endpoint
-2. **Request Tracking**: System generates a unique UUID and returns it immediately
-3. **Job Creation**: A job is added to the queue for processing
-4. **Background Processing**: Workers retrieve jobs from the queue and process them
-5. **Status Checking**: Client can check the status using the `/webhook/:requestId` endpoint
-6. **Result Retrieval**: Once processing is complete, results can be retrieved
-
-This approach offers several advantages:
-- **Improved User Experience**: Clients don't have to wait for potentially long-running operations
-- **Reliability**: Processing continues even if the client disconnects or server restarts
-- **Scalability**: Backend can process multiple requests concurrently with multiple workers
-- **Monitoring**: Request status can be tracked throughout the process
 
 ### Utility Scripts
 
