@@ -25,7 +25,6 @@ import { REDIS_CLIENT } from '../constants/tokens'
       provide: REDIS_CLIENT,
       useFactory: () => {
         try {
-          console.log('Creating dedicated Redis client for health module')
           return new Redis({
             host: process.env.REDIS_HOST || 'redis',
             port: parseInt(process.env.REDIS_PORT || '6379'),

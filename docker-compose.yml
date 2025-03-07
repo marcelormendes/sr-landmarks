@@ -30,17 +30,19 @@ services:
       - REDIS_PORT=6379
       - REDIS_TTL=3600
       - PORT=3000
-      - DATABASE_FILE=landmarks.sqlite
+      - DATABASE_FILE=/data/landmarks.sqlite
       - JWT_SECRET=this-is-a-very-secure-auth-secret-key-for-production-environment-12345
       - OVERPASS_API_URL=https://overpass-api.de/api/interpreter
-      - OVERPASS_TIMEOUT=30000
+      - OVERPASS_TIMEOUT=60000
       - OVERPASS_MAX_RETRIES=3
+      - API_SYNC_TIMEOUT=60000
       - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:4200
       - SERVICE_TYPE=api
     networks:
       - app-network
     restart: unless-stopped
     volumes:
+      - sqlite_data:/data
       - prisma_tmp:/app/prisma
 
   worker:
@@ -54,22 +56,26 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      api:
+        condition: service_started
     environment:
       - NODE_ENV=production
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_TTL=3600
       - WORKER_PORT=3100
-      - DATABASE_FILE=landmarks.sqlite
+      - DATABASE_FILE=/data/landmarks.sqlite
       - JWT_SECRET=this-is-a-very-secure-auth-secret-key-for-production-environment-12345
       - OVERPASS_API_URL=https://overpass-api.de/api/interpreter
-      - OVERPASS_TIMEOUT=30000
+      - OVERPASS_TIMEOUT=60000
       - OVERPASS_MAX_RETRIES=3
+      - API_SYNC_TIMEOUT=60000
       - SERVICE_TYPE=worker
     networks:
       - app-network
     restart: unless-stopped
     volumes:
+      - sqlite_data:/data
       - prisma_tmp:/app/prisma
 
 networks:
@@ -79,3 +85,4 @@ networks:
 volumes:
   redis_data:
   prisma_tmp:
+  sqlite_data:

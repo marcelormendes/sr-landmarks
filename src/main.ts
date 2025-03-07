@@ -103,14 +103,6 @@ async function bootstrap() {
     maxAge: 3600,
   })
 
-  // Debug: Log all registered routes using Swagger document
-  console.log('\nRegistered Routes:')
-  const paths = Object.keys(document.paths)
-  paths.forEach((path) => {
-    const methods = Object.keys(document.paths[path])
-    console.log(`${methods.map((m) => m.toUpperCase()).join(',')} ${path}`)
-  })
-
   // Start server
   const port = configService.get<number>('port') || 3000
   await app.listen(port)

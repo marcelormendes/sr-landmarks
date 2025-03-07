@@ -6,11 +6,13 @@ import { RESPONSE_MESSAGES, DEFAULT_SEARCH_RADIUS, ERROR_MESSAGES } from '../con
 import { AuthGuard } from './guard/auth.guard'
 import { LandmarksProcessorService } from '../services/landmarks/landmarks-processor.service'
 import { WebhookType } from '@prisma/client'
+import { ConfigService } from '@nestjs/config'
 
 describe('WebhookController', () => {
   let controller: WebhookController
   let webhookService: WebhookService
   let landmarksProcessorService: LandmarksProcessorService
+  let configService: ConfigService
   let loggerSpy: jest.SpyInstance
   let logSpy: jest.SpyInstance
 
@@ -42,6 +44,15 @@ describe('WebhookController', () => {
             processLandmarksByCoordinates: mockProcessLandmarks,
           },
         },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockImplementation((key) => {
+              if (key === 'api.syncTimeout') return 30000; // 30 seconds default timeout
+              return undefined;
+            }),
+          },
+        },
       ],
     })
       .overrideGuard(AuthGuard)
@@ -51,6 +62,7 @@ describe('WebhookController', () => {
     controller = module.get<WebhookController>(WebhookController)
     webhookService = module.get<WebhookService>(WebhookService)
     landmarksProcessorService = module.get<LandmarksProcessorService>(LandmarksProcessorService)
+    configService = module.get<ConfigService>(ConfigService)
 
     // Clear all mock calls before each test
     jest.clearAllMocks()

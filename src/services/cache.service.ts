@@ -30,7 +30,6 @@ export class CacheService {
       }
 
       this.logger.debug(`Cache MISS: ${key}`)
-      console.log('redisClient', this.redisClient)
       // If cache miss and we have direct Redis access, try that with our prefix
       if (this.redisClient) {
         try {

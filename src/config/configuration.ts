@@ -29,6 +29,9 @@ export default () => {
         timeout: 30000,
         maxRetries: 3,
       },
+      api: {
+        syncTimeout: 60000, // 60 seconds timeout for sync endpoint
+      },
     }
   }
 
@@ -60,6 +63,9 @@ export default () => {
         url: env.OVERPASS_URL || 'https://overpass-api.de/api/interpreter',
         timeout: env.OVERPASS_TIMEOUT || 60000,
         maxRetries: env.OVERPASS_MAX_RETRIES || 3,
+      },
+      api: {
+        syncTimeout: env.API_SYNC_TIMEOUT || 60000, // 60 seconds timeout for sync endpoint
       },
     }
   } catch (error: unknown) {

@@ -40,10 +40,6 @@ import { createRedisCacheConfig } from './config/redis.config'
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (_configService: ConfigService) => {
-        console.log('Configuring BullMQ Redis connection:')
-        console.log(`Host: ${process.env.REDIS_HOST}`)
-        console.log(`Port: ${process.env.REDIS_PORT}`)
-
         return {
           connection: {
             host: process.env.REDIS_HOST,

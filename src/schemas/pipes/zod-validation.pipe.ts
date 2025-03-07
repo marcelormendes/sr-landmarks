@@ -12,16 +12,9 @@ import { createTestSafeLogger } from '../../utils/test-utils'
 export class EnhancedZodValidationPipe implements PipeTransform {
   private readonly logger = createTestSafeLogger(EnhancedZodValidationPipe.name)
 
-  constructor(private schema: ZodSchema) {
-    this.logger.debug(
-      `Creating validation pipe with schema: ${schema.description || 'unnamed schema'}`,
-    )
-  }
+  constructor(private schema: ZodSchema) {}
 
   transform(value: unknown, _metadata: ArgumentMetadata): unknown {
-    this.logger.debug(`Validating value: ${JSON.stringify(value)}`)
-    this.logger.debug(`Metadata: ${JSON.stringify(_metadata)}`)
-
     // If we have no value or an empty object
     if (
       !value ||
@@ -34,28 +27,19 @@ export class EnhancedZodValidationPipe implements PipeTransform {
     try {
       // If it's a primitive type (string, number, etc), use it directly
       if (typeof value !== 'object' || value === null) {
-        this.logger.debug(`Processing primitive value of type: ${typeof value}`)
         return this.schema.parse(value)
       }
 
       // For objects, handle as before
       const objValue = value as { constructor?: { name?: string } }
-      this.logger.debug(
-        `Processing object of type: ${objValue.constructor?.name}`,
-      )
 
       const rawValue =
         objValue.constructor?.name === 'Object'
           ? value
           : Object.assign({}, value)
 
-      this.logger.debug(`Parsed raw value: ${JSON.stringify(rawValue)}`)
-
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const result = this.schema.parse(rawValue)
-      this.logger.debug(
-        `Validation successful, result: ${JSON.stringify(result)}`,
-      )
       return result
     } catch (error: unknown) {
       if (error instanceof ZodError) {
@@ -75,14 +59,12 @@ export class EnhancedZodValidationPipe implements PipeTransform {
           _metadata.data?.includes('lat') ||
           _metadata.data?.includes('lng')
         ) {
-          this.logger.debug('Using InvalidCoordinatesException')
           throw new InvalidCoordinatesException(
             'Invalid coordinates or parameters',
             formattedErrors,
           )
         } else {
           // For other schemas, use the general BadRequestException
-          this.logger.debug('Using general BadRequestException')
           throw new BadRequestException({
             message: 'Validation failed',
             details: formattedErrors,
