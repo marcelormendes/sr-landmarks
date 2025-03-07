@@ -26,7 +26,7 @@ export class WebhookRequestDto {
   @ApiProperty({
     description: 'Search radius in meters (optional, defaults to 500)',
     example: 1000,
-    minimum: 1,
+    minimum: 100,
     maximum: 10000,
     required: false,
     type: Number,

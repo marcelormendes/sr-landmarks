@@ -28,6 +28,7 @@ export class OverpassApiClient {
     query: string,
     retryCount = 0,
   ): Promise<OverpassApiResponse> {
+    console.log('url being used', this.apiUrl)
     if (!this.apiUrl) {
       throw new OverpassApiException(
         'Overpass API URL is missing',
@@ -43,6 +44,8 @@ export class OverpassApiClient {
       throw new Error('Overpass max retries is missing')
     }
 
+    console.log('query being used', query)
+    
     try {
       const response = await fetch(this.apiUrl, {
         method: 'POST',

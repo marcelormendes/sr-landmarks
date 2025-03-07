@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { PrismaService } from '../services/prisma.service'
+import { WebhookStatus } from '@prisma/client'
 
 @Injectable()
 export class WebhookRequestRepository {
@@ -24,7 +25,7 @@ export class WebhookRequestRepository {
         lat: data.lat,
         lng: data.lng,
         radius: data.radius,
-        status: 'pending',
+        status: WebhookStatus.Pending,
       },
     })
   }
@@ -38,7 +39,7 @@ export class WebhookRequestRepository {
     return this.prisma.webhookRequest.update({
       where: { requestId },
       data: {
-        status: 'completed',
+        status: WebhookStatus.Completed,
         completedAt: new Date(),
       },
     })
@@ -53,7 +54,7 @@ export class WebhookRequestRepository {
     return this.prisma.webhookRequest.update({
       where: { requestId },
       data: {
-        status: 'failed',
+        status: WebhookStatus.Failed,
         completedAt: new Date(),
         error,
       },

@@ -7,7 +7,7 @@ import { PrismaService } from '../src/services/prisma.service'
 import { CacheService } from '../src/services/cache.service'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { TestConfigService } from './test.config'
-import { UuidSchema } from '../src/schemas/webhook.schema'
+import { UuidSchema, WebhookSchema } from '../src/schemas/webhook.schema'
 import { EnhancedZodValidationPipe } from '../src/schemas/pipes/zod-validation.pipe'
 
 /**
@@ -43,12 +43,7 @@ describe('Landmarks API (e2e)', () => {
       .compile()
 
       app = moduleFixture.createNestApplication()
-      app.useGlobalPipes(
-        new ValidationPipe({
-          transform: true,
-          whitelist: true,
-        }),
-      )
+      // No global validation pipe needed since we're using Zod validation
 
       await app.init()
 
@@ -99,13 +94,20 @@ describe('Landmarks API (e2e)', () => {
       expect(accessToken).toBeDefined()
 
       // Step 2: Use the token to make a webhook request
+      const webhookData = {
+        lat: 51.5074,
+        lng: -0.1278,
+        radius: 500
+      }
+      console.log('Sending webhook request with data:', webhookData)
+
       const webhookResponse = await request(app.getHttpServer())
         .post('/webhook')
         .set('Authorization', `Bearer ${accessToken}`)
-        .send({
-          lat: 51.5074,
-          lng: -0.1278,
-          radius: 500
+        .send(webhookData)
+        .expect((res) => {
+          console.log('Webhook response status:', res.status)
+          console.log('Webhook response body:', res.body)
         })
         .expect(202)
 

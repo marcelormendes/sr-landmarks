@@ -3,10 +3,7 @@ import { UUID_REGEX } from '../constants'
 
 export const UuidSchema = z.string().refine(
   (val) => {
-    console.log('UuidSchema - Validating value:', val)
-    console.log('UuidSchema - Value type:', typeof val)
     const result = UUID_REGEX.test(val)
-    console.log('UuidSchema - Regex test result:', result)
     return result
   },
   {

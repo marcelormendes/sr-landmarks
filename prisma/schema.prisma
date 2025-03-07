@@ -9,28 +9,41 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Enum for tracking webhook request status
+enum WebhookStatus {
+  Pending    // Initial state when request is created
+  Completed  // Request has been processed successfully
+  Failed     // Request processing failed
+}
+
 model Landmark {
-  id        Int      @id @default(autoincrement())
-  name      String
-  type      String
-  centerLat Float
-  centerLng Float
-  geohash   String?  // New field for geohash
+  id            Int      @id @default(autoincrement())
+  name          String
+  type          String
+  centerLat     Float
+  centerLng     Float
+  geohash       String   // For geospatial queries
+  address       String?  // Optional address field
+  wiki          String?  // Wikipedia/Wikidata URL
+  website       String?  // Official website
+  openingHours  String?  // Opening hours information
+  accessibility String?  // Wheelchair accessibility info
+  tourism       String?  // Tourism information
 
   @@map("landmarks")
-  @@index([geohash]) // Index for faster querying by geohash
+  @@index([geohash]) // Index for faster geospatial queries
 }
 
 model WebhookRequest {
-  id                Int       @id @default(autoincrement())
-  requestId         String    @unique // The generated tracking ID
-  status            String    // 'pending', 'completed', 'failed'
-  lat               Float     // Original latitude from request
-  lng               Float     // Original longitude from request
-  radius            Float     // Requested radius
-  createdAt         DateTime  @default(now())
-  completedAt       DateTime? // Will be null until processing is complete
-  error             String?   // Will be null unless processing failed
+  id                Int           @id @default(autoincrement())
+  requestId         String        @unique // The generated tracking ID
+  status            WebhookStatus // The current status of the webhook request
+  lat               Float         // Original latitude from request
+  lng               Float         // Original longitude from request
+  radius            Float         // Requested radius
+  createdAt         DateTime      @default(now())
+  completedAt       DateTime?     // Will be null until processing is complete
+  error             String?       // Will be null unless processing failed
 
   @@map("webhook_requests")
 }

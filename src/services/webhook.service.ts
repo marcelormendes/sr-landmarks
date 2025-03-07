@@ -17,6 +17,23 @@ export class WebhookService {
   ) {}
 
   /**
+   * Creates a new webhook request record in the database
+   */
+  public async createWebhookRequest(
+    lat: number,
+    lng: number,
+    radius: number,
+    requestId: string,
+  ): Promise<void> {
+    await this.webhookRequestRepository.createRequest({
+      requestId,
+      lat,
+      lng,
+      radius,
+    })
+  }
+
+  /**
    * Processes coordinates by adding a job to the queue
    * Uses geohash for consistent processing
    */
@@ -36,14 +53,6 @@ export class WebhookService {
     )
 
     try {
-      // Create webhook request record with 'pending' status
-      await this.webhookRequestRepository.createRequest({
-        requestId,
-        lat,
-        lng,
-        radius,
-      })
-
       // Add job to the landmarks processing queue
       const jobId = await this.landmarksQueueService.addLandmarkProcessingJob(
         roundedLat,

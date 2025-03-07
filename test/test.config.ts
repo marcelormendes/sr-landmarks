@@ -39,21 +39,17 @@ export class TestConfigService extends ConfigService {
   }
 
   get<T = any>(propertyPath: string): T {
-    switch (propertyPath) {
-      case 'redis.host':
-        return 'localhost' as T
-      case 'redis.port':
-        return 6379 as T
-      case 'redis.ttl':
-        return 3600 as T
-      case 'jwt.secret':
-      case 'auth.secret':
-        return TEST_JWT_SECRET as T
-      case 'jwt.expiresIn':
-      case 'auth.expiresIn':
-        return '1h' as T
-      default:
-        return testConfig[propertyPath] as T
+    const parts = propertyPath.split('.')
+    let value: any = testConfig
+    
+    for (const part of parts) {
+      if (value && typeof value === 'object' && part in value) {
+        value = value[part]
+      } else {
+        return undefined as T
+      }
     }
+    
+    return value as T
   }
 } 

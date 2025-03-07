@@ -32,16 +32,9 @@ async function bootstrap() {
   // Apply security headers with Helmet
   app.use(helmet())
 
-  // Configure validation pipes
-  app.useGlobalPipes(
-    new ZodValidationPipe(),
-    new ValidationPipe({
-      whitelist: true, // Strip properties not defined in DTOs
-      forbidNonWhitelisted: true, // Throw error if non-whitelisted values are provided
-      transform: true, // Transform payloads to be objects typed according to their DTO classes
-      transformOptions: { enableImplicitConversion: false }, // Disable implicit type conversion
-    }),
-  )
+  // Configure validation pipe
+  // We use Zod for schema-based validation instead of class-validator/class-transformer
+  app.useGlobalPipes(new ZodValidationPipe())
 
   // Set up Swagger docs
   const config = new DocumentBuilder()

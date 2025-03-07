@@ -195,7 +195,7 @@ The API uses JWT-based authentication:
 
 The API key should be set in your `.env` file as `JWT_SECRET`.
 
-### Sample API Responses
+### Get LandMarks Sample API Responses
 
 ```json
 [
@@ -205,6 +205,14 @@ The API key should be set in your `.env` file as `JWT_SECRET`.
     "center": {
       "lat": 40.7484,
       "lng": -73.9857
+    },
+    "address": "350 5th Ave, New York, NY 10118",
+    "moreInfo": {
+      "wiki": "https://en.wikipedia.org/wiki/Empire_State_Building",
+      "website": "https://www.esbnyc.com",
+      "openingHours": "Mo-Su 08:00-22:00",
+      "accessibility": "yes",
+      "tourism": "sightseeing"
     }
   },
   {
@@ -213,10 +221,37 @@ The API key should be set in your `.env` file as `JWT_SECRET`.
     "center": {
       "lat": 40.7580,
       "lng": -73.9855
+    },
+    "address": "Manhattan, NY 10036",
+    "moreInfo": {
+      "wiki": "https://en.wikipedia.org/wiki/Times_Square",
+      "tourism": "sightseeing"
     }
   }
 ]
 ```
+
+### Landmark Fields
+
+Each landmark in the response may include the following fields:
+
+#### Required Fields
+- `name`: Name of the landmark
+- `type`: Type of the landmark (e.g., 'attraction', 'monument', 'building')
+- `center`: Geographic coordinates
+  - `lat`: Latitude
+  - `lng`: Longitude
+
+#### Optional Fields
+- `address`: Full address of the landmark (if available)
+- `moreInfo`: Additional information about the landmark
+  - `wiki`: Wikipedia or Wikidata URL
+  - `website`: Official website URL
+  - `openingHours`: Operating hours
+  - `accessibility`: Wheelchair accessibility information
+  - `tourism`: Tourism-related information
+
+Note: Optional fields will only be present if the data is available from the Overpass API.
 
 ## 🧪 Testing & CI
 

@@ -1,13 +1,9 @@
+import { OVERPASS_ELEMENT_TYPES } from 'src/constants/overpass.constants'
 import { z } from 'zod'
 
 export const OverpassElementSchema = z.object({
   id: z.number(),
-  tags: z
-    .object({
-      name: z.string().optional(),
-      tourism: z.string(),
-    })
-    .optional(),
+  tags: z.record(z.string()).optional(),
   center: z
     .object({
       lat: z.number(),
@@ -16,7 +12,7 @@ export const OverpassElementSchema = z.object({
     .optional(),
   lat: z.number().optional(),
   lon: z.number().optional(),
-  type: z.enum(['node', 'way', 'relation']),
+  type: z.enum(OVERPASS_ELEMENT_TYPES),
 })
 
 export const OverpassResponseSchema = z.object({
