@@ -29,6 +29,12 @@ describe('LandmarksProcessorService', () => {
       centerLat: 40.1,
       centerLng: -74.5,
       geohash: 'dr4ur8r',
+      address: null,
+      wiki: null,
+      website: null,
+      openingHours: null,
+      accessibility: null,
+      tourism: null,
     },
   ]
 

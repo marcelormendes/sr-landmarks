@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { WebhookRequestRepository } from './webhook-request.repository'
 import { PrismaService } from '../services/prisma.service'
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
+import { WebhookStatus } from '@prisma/client'
 
 describe('WebhookRequestRepository', () => {
   let repository: WebhookRequestRepository
@@ -14,7 +15,7 @@ describe('WebhookRequestRepository', () => {
     lat: 0,
     lng: 0,
     radius: 100,
-    status: 'PENDING',
+    status: WebhookStatus.Pending,
     createdAt: new Date(),
     completedAt: null,
     error: null,
@@ -22,14 +23,14 @@ describe('WebhookRequestRepository', () => {
 
   const mockCompletedWebhookRequest = {
     ...mockWebhookRequest,
-    status: 'COMPLETED',
+    status: WebhookStatus.Completed,
     completedAt: new Date(),
     error: null,
   }
 
   const mockFailedWebhookRequest = {
     ...mockWebhookRequest,
-    status: 'failed',
+    status: WebhookStatus.Failed,
     completedAt: new Date(),
     error: 'An error occurred',
   }
@@ -81,7 +82,7 @@ describe('WebhookRequestRepository', () => {
           lat: data.lat,
           lng: data.lng,
           radius: data.radius,
-          status: 'pending',
+          status: WebhookStatus.Pending,
         },
       })
       expect(result).toEqual(mockWebhookRequest)
@@ -127,7 +128,7 @@ describe('WebhookRequestRepository', () => {
       expect(prismaService.webhookRequest.update).toHaveBeenCalledWith({
         where: { requestId },
         data: {
-          status: 'completed',
+          status: WebhookStatus.Completed,
           completedAt: expect.any(Date),
         },
       })
@@ -170,7 +171,7 @@ describe('WebhookRequestRepository', () => {
       expect(prismaService.webhookRequest.update).toHaveBeenCalledWith({
         where: { requestId },
         data: {
-          status: 'failed',
+          status: WebhookStatus.Failed,
           completedAt: expect.any(Date),
           error,
         },

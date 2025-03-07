@@ -20,7 +20,9 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "ci": "./scripts/run-ci.sh",
-    "pre-commit": "pnpm lint && pnpm test"
+    "pre-commit": "pnpm lint && pnpm test",
+    "docker:logs": "./scripts/docker-logs.sh",
+    "docker:rerun": "docker compose down -v && docker compose up -d"
   },
   "dependencies": {
     "@keyv/redis": "^4.3.1",

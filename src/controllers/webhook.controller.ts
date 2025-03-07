@@ -1,41 +1,41 @@
 import {
   Controller,
   Post,
-  Get,
   Body,
+  Get,
   Param,
-  UseGuards,
   HttpCode,
+  UseGuards,
   Logger,
   NotFoundException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common'
 import { v4 as uuidv4 } from 'uuid'
+import { WebhookService } from '../services/webhook.service'
+import { WebhookSchema, UuidSchema } from '../schemas/webhook.schema'
+import { EnhancedZodValidationPipe } from '../schemas/pipes/zod-validation.pipe'
+import { AuthGuard } from './guard/auth.guard'
 import {
   ApiTags,
-  ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
+  ApiOperation,
   ApiBody,
+  ApiResponse,
   ApiParam,
 } from '@nestjs/swagger'
-import { AuthGuard } from './guard/auth.guard'
-import { WebhookService } from '../services/webhook.service'
-import { EnhancedZodValidationPipe } from '../schemas/pipes/zod-validation.pipe'
-import { WebhookSchema, Webhook } from '../schemas/webhook.schema'
 import {
-  WebhookApiDocs,
   WebhookRequestDto,
   WebhookResponseDto,
   WebhookStatusDto,
+  WebhookApiDocs,
 } from '../dto/webhook.dto'
 import {
-  HTTP_STATUS,
   ERROR_MESSAGES,
-  RESPONSE_MESSAGES,
   DEFAULT_SEARCH_RADIUS,
+  RESPONSE_MESSAGES,
 } from '../constants'
-import { UuidSchema } from '../schemas/webhook.schema'
+import { ZodError } from 'zod'
 
 /**
  * Controller for handling webhook endpoints.
@@ -54,41 +54,41 @@ export class WebhookController {
    */
   @Post()
   @UseGuards(AuthGuard)
-  @HttpCode(HTTP_STATUS.ACCEPTED)
+  @HttpCode(202)
   @ApiBearerAuth()
   @ApiOperation(WebhookApiDocs.OPERATIONS.POST_WEBHOOK)
   @ApiBody({ type: WebhookRequestDto })
   @ApiResponse(WebhookApiDocs.RESPONSES.ACCEPTED)
-  processCoordinates(
-    @Body(new EnhancedZodValidationPipe(WebhookSchema)) coordinates: Webhook,
-  ): WebhookResponseDto {
-    // Generate a UUID for the request ID
+  async processCoordinates(
+    @Body(new EnhancedZodValidationPipe(WebhookSchema))
+    coordinates: WebhookRequestDto,
+  ): Promise<WebhookResponseDto> {
+    const { lat, lng, radius = DEFAULT_SEARCH_RADIUS } = coordinates
     const requestId = uuidv4()
 
-    this.logger.log(
-      `Processing webhook request ${requestId} for coordinates: (${coordinates.lat}, ${coordinates.lng})`,
-    )
-
-    // Start processing in the background and immediately return
-    void this.webhookService
-      .processCoordinates(
-        coordinates.lat,
-        coordinates.lng,
-        coordinates.radius || DEFAULT_SEARCH_RADIUS,
+    try {
+      // First create the webhook request record and wait for it
+      await this.webhookService.createWebhookRequest(
+        lat,
+        lng,
+        radius,
         requestId,
       )
-      .catch((error: unknown) => {
-        this.logger.error(
-          `Error processing webhook ${requestId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          error instanceof Error ? error.stack : undefined,
-        )
-      })
 
-    // Return immediately with a 202 Accepted response
-    return {
-      success: true,
-      requestId,
-      message: RESPONSE_MESSAGES.WEBHOOK_RECEIVED,
+      // Then start background processing
+      void this.webhookService.processCoordinates(lat, lng, radius, requestId)
+
+      return {
+        success: true,
+        requestId,
+        message: RESPONSE_MESSAGES.WEBHOOK_RECEIVED,
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error processing webhook: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error.stack : 'No stack trace',
+      )
+      throw new InternalServerErrorException('Error processing webhook')
     }
   }
 

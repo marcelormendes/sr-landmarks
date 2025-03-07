@@ -36,6 +36,7 @@ describe('WebhookController', () => {
         {
           provide: WebhookService,
           useValue: {
+            createWebhookRequest: jest.fn().mockImplementation(() => Promise.resolve()),
             processCoordinates: jest.fn().mockImplementation(() => Promise.resolve()),
             getWebhookStatus: jest.fn(),
             getRecentWebhooks: jest.fn(),
@@ -104,10 +105,10 @@ describe('WebhookController', () => {
       // Mock the UUID generator for consistent testing
       jest.spyOn(require('uuid'), 'v4').mockReturnValue('test-uuid-123')
 
-      const result = controller.processCoordinates(dto)
+      const result = await controller.processCoordinates(dto)
 
       // Service should be called with the correct params, including requestId
-      expect(service.processCoordinates).toHaveBeenCalledWith(
+      expect(service.createWebhookRequest).toHaveBeenCalledWith(
         dto.lat,
         dto.lng,
         dto.radius,
@@ -115,7 +116,12 @@ describe('WebhookController', () => {
       )
       
       // Verify processCoordinates was called but not awaited
-      expect(service.processCoordinates).toHaveBeenCalled()
+      expect(service.processCoordinates).toHaveBeenCalledWith(
+        dto.lat,
+        dto.lng,
+        dto.radius,
+        'test-uuid-123'
+      )
       
       // Response should be a webhook acknowledgment, not landmarks
       expect(result).toEqual({
@@ -134,18 +140,23 @@ describe('WebhookController', () => {
       // Mock the UUID generator for consistent testing
       jest.spyOn(require('uuid'), 'v4').mockReturnValue('test-uuid-456')
 
-      const result = controller.processCoordinates(dto)
+      const result = await controller.processCoordinates(dto)
 
       // Service should be called with default radius
-      expect(service.processCoordinates).toHaveBeenCalledWith(
+      expect(service.createWebhookRequest).toHaveBeenCalledWith(
         dto.lat,
         dto.lng,
         DEFAULT_SEARCH_RADIUS,
         'test-uuid-456'
       )
       
-      // Verify processCoordinates was called but not awaited
-      expect(service.processCoordinates).toHaveBeenCalled()
+      // Verify processCoordinates was called with default radius
+      expect(service.processCoordinates).toHaveBeenCalledWith(
+        dto.lat,
+        dto.lng,
+        DEFAULT_SEARCH_RADIUS,
+        'test-uuid-456'
+      )
       
       // Response should be a webhook acknowledgment
       expect(result).toEqual({

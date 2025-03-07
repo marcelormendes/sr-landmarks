@@ -8,7 +8,7 @@ export const UUID_REGEX =
  * Default validation values
  */
 export const DEFAULT_SEARCH_RADIUS = 500 // meters
-export const MAX_SEARCH_RADIUS = 5000 // meters
+export const MAX_SEARCH_RADIUS = 10000 // meters
 export const MIN_SEARCH_RADIUS = 100 // meters
 
 /**
