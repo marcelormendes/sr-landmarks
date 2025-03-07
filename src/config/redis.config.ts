@@ -26,14 +26,38 @@ export function createRedisCacheConfig() {
             const redis = new Redis({
               host: process.env.REDIS_HOST,
               port: parseInt(process.env.REDIS_PORT || '6379'),
+              connectTimeout: 5000, // Increase timeout to 5 seconds
+              maxRetriesPerRequest: 5, // Increase retries per request
               reconnectOnError: (err) => {
                 console.log(`Redis connection error: ${err.message}`)
                 return true // Always reconnect
               },
               retryStrategy: (times) => {
                 console.log(`Retrying Redis connection, attempt #${times}`)
-                return Math.min(times * 100, 3000) // Wait max 3 seconds
+                const delay = Math.min(times * 500, 5000) // Wait max 5 seconds between retries
+                console.log(`Next retry in ${delay}ms`)
+                return delay
               },
+            })
+
+            // Add error event handler
+            redis.on('error', (err) => {
+              console.error('Redis client error:', err)
+            })
+
+            // Add ready event handler
+            redis.on('ready', () => {
+              console.log('Redis client ready')
+            })
+
+            // Add connect event handler
+            redis.on('connect', () => {
+              console.log('Redis client connected')
+            })
+
+            // Add reconnecting event handler
+            redis.on('reconnecting', () => {
+              console.log('Redis client reconnecting')
             })
 
             return {

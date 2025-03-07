@@ -68,7 +68,7 @@ jobs:
       - name: Build the application
         run: pnpm build
       - name: Run e2e tests
-        run: pnpm test:e2e
+        run: pnpm test:e2e:ci
         env:
           REDIS_HOST: localhost
           REDIS_PORT: 6379
