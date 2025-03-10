@@ -1,5 +1,8 @@
 import { envSchema } from '../schemas/configuration.schema'
 import { JWT_CONSTANTS } from '../constants/auth.constants'
+import { Logger } from '@nestjs/common'
+import { ErrorHandler } from 'src/exceptions/error-handling'
+import { ConfigurationException } from 'src/exceptions/api.exceptions'
 
 export default () => {
   // Check if we're in test mode
@@ -26,11 +29,16 @@ export default () => {
       },
       overpass: {
         url: 'https://overpass-api.de/api/interpreter',
-        timeout: 30000,
+        timeout: 60000,
         maxRetries: 3,
       },
       api: {
         syncTimeout: 60000, // 60 seconds timeout for sync endpoint
+      },
+      worker: {
+        lockDuration: 30000,
+        stalledInterval: 15000,
+        maxStalledCount: 3,
       },
     }
   }
@@ -67,10 +75,17 @@ export default () => {
       api: {
         syncTimeout: env.API_SYNC_TIMEOUT || 60000, // 60 seconds timeout for sync endpoint
       },
+      worker: {
+        lockDuration: env.WORKER_LOCK_DURATION || 30000,
+        stalledInterval: env.WORKER_STALLED_INTERVAL || 15000,
+        maxStalledCount: env.WORKER_MAX_STALLED_COUNT || 3,
+      },
     }
   } catch (error: unknown) {
-    const err = error as Error
-    console.error('Configuration validation failed:', err.message)
-    throw new Error('Application cannot start due to configuration errors')
+    const logger = new Logger('Configuration')
+    ErrorHandler.handle(error, ConfigurationException, {
+      context: 'Configuration',
+      logger: logger,
+    })
   }
 }

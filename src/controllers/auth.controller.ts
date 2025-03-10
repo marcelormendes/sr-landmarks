@@ -4,16 +4,17 @@ import {
   Body,
   HttpCode,
   HttpStatus,
-  UnauthorizedException,
   Logger,
 } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'
-import { AuthService } from '../services/auth.service'
+import { AuthService } from '../services/auth/auth.service'
 import { Public } from '../decorators/public.decorator'
 import { ApiKey, authSchema } from '../schemas/auth.schema'
 import { TokenResponseDto } from '../dto/auth.dto'
 import { EnhancedZodValidationPipe } from '../schemas/pipes/zod-validation.pipe'
 import { BEARER, ONE_HOUR } from '../constants/auth.constants'
+import { AuthUnAuthorizedException } from '../exceptions/api.exceptions'
+import { ErrorHandler } from '../exceptions/error-handling'
 /**
  * Controller for authentication endpoints
  */
@@ -41,11 +42,17 @@ export class AuthController {
     description: 'Invalid API key',
   })
   async getToken(
-    @Body(new EnhancedZodValidationPipe(authSchema)) body: ApiKey,
+    @Body(
+      new EnhancedZodValidationPipe(authSchema, new Logger('AuthValidation')),
+    )
+    body: ApiKey,
   ): Promise<TokenResponseDto> {
     try {
       if (!body.apiKey) {
-        throw new UnauthorizedException('API key is required')
+        throw new AuthUnAuthorizedException(
+          'API key is required',
+          HttpStatus.BAD_REQUEST,
+        )
       }
 
       const token = await this.authService.generateToken(body.apiKey)
@@ -55,11 +62,11 @@ export class AuthController {
         expires_in: ONE_HOUR,
         token_type: BEARER,
       }
-    } catch (error) {
-      this.logger.warn(
-        `Token generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      )
-      throw new UnauthorizedException('Invalid API key')
+    } catch (error: unknown) {
+      ErrorHandler.handle(error, AuthUnAuthorizedException, {
+        context: 'Auth controller',
+        logger: this.logger,
+      })
     }
   }
 }

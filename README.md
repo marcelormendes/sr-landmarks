@@ -122,12 +122,6 @@ The API will be available at `http://localhost:3000` by default.
 The API is documented using Swagger. Once the application is running, visit `/api/docs` in your browser for interactive documentation.
 
 ### Main Endpoints
-
-- `GET /landmarks?lat=40.7128&lng=-74.0060`
-  - Retrieve landmarks near specified coordinates
-  - Parameters:
-    - `lat`: Latitude (required)
-    - `lng`: Longitude (required)
   
 - `POST /webhook`
   - Asynchronous webhook endpoint for processing coordinates and retrieving landmarks
@@ -233,7 +227,13 @@ The API uses JWT-based authentication:
 
 The API key should be set in your `.env` file as `JWT_SECRET`.
 
-### Get LandMarks Sample API Responses
+### Get LandMarks
+
+- `GET /landmarks?lat=40.7128&lng=-74.0060`
+  - Retrieve landmarks near specified coordinates
+  - Parameters:
+    - `lat`: Latitude (required)
+    - `lng`: Longitude (required)
 
 ```json
 [
@@ -290,6 +290,38 @@ Each landmark in the response may include the following fields:
   - `tourism`: Tourism-related information
 
 Note: Optional fields will only be present if the data is available from the Overpass API.
+
+## Error Responses
+
+The API returns consistent error responses in the following format:
+
+### 500 Internal Server Error
+```json
+{
+  "statusCode": 500,
+  "message": "Internal server error",
+  "timestamp": "2024-XX-XXTHH:mm:ss.sssZ",
+  "path": "/api/endpoint"
+}
+```
+
+### Custom Exception Response
+```json
+{
+  "statusCode": <status_code>,
+  "message": "Error message",
+  "timestamp": "2024-XX-XXTHH:mm:ss.sssZ",
+  "path": "/api/endpoint",
+  "cause": "Optional cause information" // Only included when cause is present
+}
+```
+
+All error responses include:
+- `statusCode`: HTTP status code of the error
+- `message`: Description of the error
+- `timestamp`: ISO timestamp when the error occurred
+- `path`: The endpoint URL that generated the error
+- `cause`: (Optional) Additional error context when available
 
 ## 🧪 Testing & CI
 
@@ -492,9 +524,6 @@ pnpm run start:dev
 
 # Show docker logs
 pnpm run docker:logs
-
-# Show docker logs for first worker
-pnpm run docker:logs:worker1
 
 # Rebuild docker containers
 pnpm run docker:rebuild

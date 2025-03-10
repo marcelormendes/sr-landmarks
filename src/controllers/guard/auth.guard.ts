@@ -3,11 +3,11 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Reflector } from '@nestjs/core'
 import { JwtService } from '@nestjs/jwt'
-import { createTestSafeLogger } from '../../utils/test-utils'
 import { Request } from 'express'
 import {
   BEARER_AUTH_TYPE,
@@ -23,13 +23,13 @@ import { RequestWithUser } from '../../interfaces/auth.interface'
  */
 @Injectable()
 export class AuthGuard implements CanActivate {
-  private readonly logger = createTestSafeLogger(AuthGuard.name)
   private readonly jwtSecret: string
 
   constructor(
     private configService: ConfigService,
     private jwtService: JwtService,
     private reflector: Reflector,
+    private readonly logger: Logger,
   ) {
     this.jwtSecret =
       this.configService.get<string>('auth.secret') || JWT_CONSTANTS.secret

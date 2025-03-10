@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core'
 import { Logger } from '@nestjs/common'
 import * as os from 'os'
-import { WorkerModule } from './modules/worker.module'
+import { WorkerModule } from './worker.module'
 import { v4 } from 'uuid'
 
 /**
@@ -58,11 +58,11 @@ async function bootstrap() {
 }
 
 // Add void to indicate we're intentionally not waiting for bootstrap
-void bootstrap().catch((err) => {
-  const error = err as Error
-  Logger.error(
-    'Worker failed to start: An unexpected error occurred',
-    error.stack,
-  )
+void bootstrap().catch((error: unknown) => {
+  if (error instanceof Error) {
+    Logger.error(`Worker startup failed: ${error.message}`)
+    process.exit(1)
+  }
+  Logger.error('Unknown error occurred during worker startup')
   process.exit(1)
 })

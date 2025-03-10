@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { LandmarkDto } from '../../dto/landmark.dto'
+import { OverpassApiException } from '../../exceptions/api.exceptions'
+import { ErrorHandler } from '../../exceptions/error-handling'
 import { OverpassApiClient } from './overpass-api.client'
 import { OverpassQueryBuilder } from './overpass-query.builder'
 import { OverpassResponseProcessor } from './overpass-response.processor'
-import { OverpassApiException } from '../../exceptions/api.exceptions'
-import { ERROR_MESSAGES } from '../../constants'
 
 /**
  * Service responsible for coordinating the Overpass API pipeline.
@@ -42,18 +42,10 @@ export class OverpassPipelineService {
       return this.responseProcessor.processResponse(response)
     } catch (error) {
       // Log the full error for debugging
-      this.logger.error(
-        `Pipeline execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error instanceof Error ? error.stack : undefined,
-      )
-
-      // Rethrow if it's already an OverpassApiException
-      if (error instanceof OverpassApiException) {
-        throw error
-      }
-
-      // Otherwise wrap in OverpassApiException with generic message
-      throw new OverpassApiException(ERROR_MESSAGES.OVERPASS_API_ERROR)
+      ErrorHandler.handle(error, OverpassApiException, {
+        context: 'Overpass pipeline',
+        logger: this.logger,
+      })
     }
   }
 }

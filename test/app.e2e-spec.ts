@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { INestApplication, ValidationPipe } from '@nestjs/common'
+import { INestApplication, Logger } from '@nestjs/common'
 import request from 'supertest'
-import { AppModule } from '../src/app.module'
 import { ConfigService } from '@nestjs/config'
 import { PrismaService } from '../src/services/prisma.service'
 import { CacheService } from '../src/services/cache.service'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { TestConfigService } from './test.config'
-import { UuidSchema, WebhookSchema } from '../src/schemas/webhook.schema'
+import { UuidSchema } from '../src/schemas/webhook.schema'
 import { EnhancedZodValidationPipe } from '../src/schemas/pipes/zod-validation.pipe'
+import { TestModule } from './test.module'
 
 /**
  * End-to-end tests for the Landmarks API
@@ -36,7 +36,7 @@ describe('Landmarks API (e2e)', () => {
       execSync('npx prisma db push --force-reset', { stdio: 'inherit' })
 
       const moduleFixture: TestingModule = await Test.createTestingModule({
-        imports: [AppModule],
+        imports: [TestModule],
       })
       .overrideProvider(ConfigService)
       .useClass(TestConfigService)
@@ -115,7 +115,8 @@ describe('Landmarks API (e2e)', () => {
       console.log('Webhook created with requestId:', requestId)
 
       // Test the UUID validation directly
-      const validationPipe = new EnhancedZodValidationPipe(UuidSchema)
+      const logger = new Logger('ValidationTest');
+      const validationPipe = new EnhancedZodValidationPipe(UuidSchema, logger)
       try {
         console.log('Attempting to validate UUID:', requestId)
         console.log('UUID validation metadata:', {

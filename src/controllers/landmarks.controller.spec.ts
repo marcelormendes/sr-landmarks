@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { LandmarksController } from './landmarks.controller'
 import { LandmarksService } from '../services/landmarks/landmarks.service'
 import { LandmarksSchema } from '../schemas/landmarks.schema'
+import { HttpStatus } from '@nestjs/common'
 
 // Create a mock logger that doesn't log during tests
 const mockLogger = {
@@ -11,10 +12,11 @@ const mockLogger = {
   debug: jest.fn(),
   verbose: jest.fn(),
 }
-import { BadRequestException, InternalServerErrorException, Logger, NotFoundException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common'
+import { Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { AuthGuard } from './guard/auth.guard'
 import { EnhancedZodValidationPipe } from '../schemas/pipes/zod-validation.pipe'
+import { LandmarkNotFoundException, OverpassApiException, WebhookControllerException, AuthUnAuthorizedException, InvalidCoordinatesException, ZodCustomError } from '../exceptions/api.exceptions'
 
 // Define the test interface matching our expected transformation
 interface QueryCoordinatesTest {
@@ -105,7 +107,7 @@ describe('LandmarksController', () => {
 
     it('should handle service errors and pass them through', async () => {
       const dto: QueryCoordinatesTest = { lat: '40.0', lng: '-74.0' }
-      const notFoundError = new NotFoundException('Landmarks not found')
+      const notFoundError = new LandmarkNotFoundException('Landmarks not found', HttpStatus.NOT_FOUND)
       
       // Mock the service to throw an error
       jest.spyOn(service, 'searchLandmarks').mockRejectedValue(notFoundError)
@@ -121,30 +123,30 @@ describe('LandmarksController', () => {
         }
       )
 
-      await expect(controller.getLandmarks(dto as any)).rejects.toThrow(NotFoundException)
+      await expect(controller.getLandmarks(dto as any)).rejects.toThrow(LandmarkNotFoundException)
     })
 
     it('should handle service unavailable exceptions', async () => {
       const dto: QueryCoordinatesTest = { lat: '40.0', lng: '-74.0' }
-      const serviceError = new ServiceUnavailableException('External API unavailable')
+      const serviceError = new OverpassApiException('External API unavailable', HttpStatus.SERVICE_UNAVAILABLE)
       
       // Mock the service to throw an error
       jest.spyOn(service, 'searchLandmarks').mockRejectedValue(serviceError)
       
       await expect(controller.getLandmarks(dto as any)).rejects.toThrow(
-        ServiceUnavailableException
+        OverpassApiException
       )
     })
 
     it('should handle internal server errors', async () => {
       const dto: QueryCoordinatesTest = { lat: '40.0', lng: '-74.0' }
-      const internalError = new InternalServerErrorException('Database connection failed')
+      const internalError = new WebhookControllerException('Database connection failed', HttpStatus.INTERNAL_SERVER_ERROR)
       
       // Mock the service to throw an error
       jest.spyOn(service, 'searchLandmarks').mockRejectedValue(internalError)
       
       await expect(controller.getLandmarks(dto as any)).rejects.toThrow(
-        InternalServerErrorException
+        WebhookControllerException
       )
     })
   })
@@ -154,7 +156,7 @@ describe('LandmarksController', () => {
       // Create a mock guard that throws an error
       const authGuardMock = { 
         canActivate: jest.fn().mockImplementation(() => {
-          throw new UnauthorizedException('Invalid token')
+          throw new AuthUnAuthorizedException('Invalid token', HttpStatus.UNAUTHORIZED)
         })
       };
       
@@ -166,13 +168,13 @@ describe('LandmarksController', () => {
       // Call the guard directly to verify it throws
       expect(() => 
         authGuardMock.canActivate(mockRequest as any, mockResponse as any, mockNext)
-      ).toThrow(UnauthorizedException);
+      ).toThrow(AuthUnAuthorizedException);
       
       // Verify the error was an UnauthorizedException
       try {
         authGuardMock.canActivate(mockRequest as any, mockResponse as any, mockNext);
       } catch (error) {
-        expect(error).toBeInstanceOf(UnauthorizedException);
+        expect(error).toBeInstanceOf(AuthUnAuthorizedException);
         expect(error.message).toBe('Invalid token');
       }
     })
@@ -180,8 +182,8 @@ describe('LandmarksController', () => {
 
   describe('validation', () => {
     it('should handle validation errors for invalid coordinates', async () => {
-      // Create an instance of the validation pipe
-      const validationPipe = new EnhancedZodValidationPipe(LandmarksSchema)
+      // Create an instance of the validation pipe with logger
+      const validationPipe = new EnhancedZodValidationPipe(LandmarksSchema, new Logger('ValidationTest'))
       
       // Invalid data
       const invalidDto = { lat: 'not-a-number', lng: '-74.0' }
@@ -192,7 +194,7 @@ describe('LandmarksController', () => {
           type: 'query',
           metatype: undefined,
         } as any)
-      }).rejects.toThrow() // Just check for any error, not specifically BadRequestException
+      }).rejects.toThrow(InvalidCoordinatesException)
       
       // Verify the error in a more specific way
       try {
@@ -201,27 +203,25 @@ describe('LandmarksController', () => {
           metatype: undefined,
         } as any)
       } catch (error) {
-        // Check that we have an error response with a message (either message could be valid)
-        expect(['Invalid coordinates or parameters', 'Validation failed']).toContain(error.message)
-        // The important part is that the field should be 'lat'
-        expect(error.response?.details?.[0]?.field).toBe('lat')
+        expect(error).toBeInstanceOf(InvalidCoordinatesException)
+        expect(error.message).toBe('Invalid coordinates or parameters')
       }
     })
     
     it('should handle missing data in validation', async () => {
-      // Create an instance of the validation pipe
-      const validationPipe = new EnhancedZodValidationPipe(LandmarksSchema)
+      // Create an instance of the validation pipe with logger
+      const validationPipe = new EnhancedZodValidationPipe(LandmarksSchema, new Logger('ValidationTest'))
       
       // Empty data
       const emptyDto = {}
       
-      // Should throw BadRequestException for empty data
+      // Should throw ZodCustomError for empty data
       expect(() => 
         validationPipe.transform(emptyDto, {
           type: 'query',
           metatype: undefined,
         } as any)
-      ).toThrow(BadRequestException)
+      ).toThrow(ZodCustomError)
       
       try {
         validationPipe.transform(emptyDto, {
@@ -229,7 +229,7 @@ describe('LandmarksController', () => {
           metatype: undefined,
         } as any)
       } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException)
+        expect(error).toBeInstanceOf(ZodCustomError)
         expect(error.message).toBe('No data provided')
       }
     })

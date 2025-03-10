@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common'
+import { Module, Logger } from '@nestjs/common'
 import { LandmarkRepository } from '../repositories/landmark.repository'
 import { WebhookRequestRepository } from '../repositories/webhook-request.repository'
-import { PrismaModule } from './prisma.module'
+import { PrismaModule } from '../services/prisma.module'
 
 /**
  * Module for repository-related functionality.
@@ -11,7 +11,14 @@ import { PrismaModule } from './prisma.module'
  */
 @Module({
   imports: [PrismaModule],
-  providers: [LandmarkRepository, WebhookRequestRepository],
+  providers: [
+    LandmarkRepository,
+    WebhookRequestRepository,
+    {
+      provide: Logger,
+      useValue: new Logger('RepositoryModule'),
+    },
+  ],
   exports: [LandmarkRepository, WebhookRequestRepository],
 })
 export class RepositoryModule {}

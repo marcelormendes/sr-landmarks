@@ -1,11 +1,10 @@
-import { HttpException } from '@nestjs/common'
-import { ERROR_MESSAGES, ERROR_CODES, HTTP_STATUS } from '../constants'
+import { CustomException } from './custom.exceptions'
 
 /**
  * Base custom exception class with standardized error structure
  * All domain-specific exceptions should extend this class
  */
-export class BaseApiException extends HttpException {
+export class BaseApiException extends CustomException {
   constructor(
     error: string,
     message: string,
@@ -13,103 +12,76 @@ export class BaseApiException extends HttpException {
     details?: unknown,
     errorCode?: string,
   ) {
-    super(
-      {
-        error,
-        message,
-        details,
-        errorCode,
-        timestamp: new Date().toISOString(),
-      },
-      statusCode,
-    )
+    super(message, statusCode)
+    this.error = error
+    this.details = details
+    this.errorCode = errorCode
+    this.timestamp = new Date().toISOString()
   }
+
+  error: string
+  message: string
+  details?: unknown
+  errorCode?: string
+  timestamp: string
 }
 
 /**
  * Thrown when the Overpass API fails to respond or returns an error
  */
-export class OverpassApiException extends BaseApiException {
-  constructor(
-    message: string = ERROR_MESSAGES.OVERPASS_API_ERROR,
-    details?: unknown,
-    statusCode: number = HTTP_STATUS.SERVICE_UNAVAILABLE,
-  ) {
-    super(
-      'Overpass API Error',
-      message,
-      statusCode,
-      details,
-      ERROR_CODES.SERVICE_UNAVAILABLE,
-    )
-  }
-}
+export class OverpassApiException extends CustomException {}
 
 /**
  * Thrown when no landmarks were found for a given search criteria
  */
-export class LandmarkNotFoundException extends BaseApiException {
-  constructor(
-    message: string = ERROR_MESSAGES.LANDMARK_NOT_FOUND,
-    details?: unknown,
-  ) {
-    super(
-      'Not Found',
-      message,
-      HTTP_STATUS.NOT_FOUND,
-      details,
-      ERROR_CODES.NOT_FOUND,
-    )
-  }
-}
+export class LandmarkNotFoundException extends CustomException {}
 
 /**
  * Thrown when the provided coordinates are invalid or outside supported bounds
  */
-export class InvalidCoordinatesException extends BaseApiException {
-  constructor(
-    message: string = ERROR_MESSAGES.INVALID_COORDINATES,
-    details?: unknown,
-  ) {
-    super(
-      'Bad Request',
-      message,
-      HTTP_STATUS.BAD_REQUEST,
-      details,
-      ERROR_CODES.BAD_REQUEST,
-    )
-  }
-}
+export class InvalidCoordinatesException extends CustomException {}
 
 /**
  * Thrown when a cache operation fails
  */
-export class CacheException extends BaseApiException {
-  constructor(message: string = 'Cache operation failed', details?: unknown) {
-    super(
-      'Cache Error',
-      message,
-      HTTP_STATUS.INTERNAL_SERVER_ERROR,
-      details,
-      ERROR_CODES.INTERNAL_SERVER_ERROR,
-    )
-  }
-}
+export class CacheException extends CustomException {}
 
 /**
  * Thrown when a database operation fails
  */
-export class DatabaseException extends BaseApiException {
-  constructor(
-    message: string = ERROR_MESSAGES.DATABASE_ERROR,
-    details?: unknown,
-  ) {
-    super(
-      'Database Error',
-      message,
-      HTTP_STATUS.INTERNAL_SERVER_ERROR,
-      details,
-      ERROR_CODES.INTERNAL_SERVER_ERROR,
-    )
-  }
-}
+export class DatabaseException extends CustomException {}
+
+/**
+ * Thrown when a landmark processing operation fails
+ */
+export class LandmarkQueueConsumerException extends CustomException {}
+
+/**
+ * Thrown when a configuration error occurs
+ */
+export class ConfigurationException extends CustomException {}
+
+/**
+ * Thrown when an unauthorized request is made
+ */
+export class AuthUnAuthorizedException extends CustomException {}
+
+/**
+ * Thrown when a webhook request fails
+ */
+export class WebhookControllerException extends CustomException {}
+
+/**
+ * Thrown when a Zod validation error occurs
+ */
+export class ZodCustomError extends CustomException {}
+
+/**
+ * Thrown when a webhook service error occurs
+ */
+export class WebhookServiceException extends CustomException {}
+
+/**
+ * Thrown when a landmark service error occurs
+ */
+export class LandmarkServiceException extends CustomException {}

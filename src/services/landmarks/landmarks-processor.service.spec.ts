@@ -6,12 +6,14 @@ import { OverpassService } from '../overpass/overpass.service'
 import { CacheService } from '../cache.service'
 import { encodeGeohash } from '../../utils/coordinate.util'
 import { LandmarksTransformerService } from './landmarks-transformer.service'
+import { TransformationError } from '../../exceptions/transformation.exceptions'
 
 describe('LandmarksProcessorService', () => {
   let service: LandmarksProcessorService
   let landmarkRepository: LandmarkRepository
   let overpassService: OverpassService
   let cacheService: CacheService
+  let transformerService: LandmarksTransformerService
 
   const mockLandmarks = [
     {
@@ -64,28 +66,14 @@ describe('LandmarksProcessorService', () => {
             set: jest.fn(),
           },
         },
-        {
-          provide: 'LandmarksTransformerService',
-          useValue: {
-            transformLandmarks: jest.fn().mockImplementation((landmarks) => 
-              landmarks.map(landmark => ({
-                name: landmark.name,
-                type: landmark.type,
-                center: {
-                  lat: landmark.centerLat,
-                  lng: landmark.centerLng
-                }
-              }))
-            ),
-          },
-        },
       ],
     }).compile()
 
-    service = module.get<LandmarksProcessorService>(LandmarksProcessorService)
-    landmarkRepository = module.get<LandmarkRepository>(LandmarkRepository)
-    overpassService = module.get<OverpassService>(OverpassService)
-    cacheService = module.get<CacheService>(CacheService)
+    service = module.get(LandmarksProcessorService)
+    landmarkRepository = module.get(LandmarkRepository)
+    overpassService = module.get(OverpassService)
+    cacheService = module.get(CacheService)
+    transformerService = module.get(LandmarksTransformerService)
   })
 
   it('should be defined', () => {
@@ -147,6 +135,56 @@ describe('LandmarksProcessorService', () => {
       expect(landmarkRepository.createMany).not.toHaveBeenCalled()
       expect(cacheService.set).not.toHaveBeenCalled()
       expect(result).toEqual([])
+    })
+
+    it('should handle database connection errors', async () => {
+      jest.spyOn(landmarkRepository, 'findByGeohash')
+        .mockRejectedValue(new Error('Database connection failed'))
+
+      await expect(
+        service.processLandmarksByCoordinates(lat, lng, radius)
+      ).rejects.toThrow('Database connection failed')
+
+      expect(overpassService.findNearbyLandmarks).not.toHaveBeenCalled()
+    })
+
+    it('should handle Overpass service errors', async () => {
+      jest.spyOn(landmarkRepository, 'findByGeohash').mockResolvedValue([])
+      jest.spyOn(overpassService, 'findNearbyLandmarks')
+        .mockRejectedValue(new Error('Overpass API error'))
+
+      await expect(
+        service.processLandmarksByCoordinates(lat, lng, radius)
+      ).rejects.toThrow('Overpass API error')
+    })
+
+    it('should handle cache service errors', async () => {
+      jest.spyOn(landmarkRepository, 'findByGeohash').mockResolvedValue(mockDbLandmarks)
+      jest.spyOn(cacheService, 'set')
+        .mockRejectedValue(new Error('Cache service error'))
+
+      await expect(
+        service.processLandmarksByCoordinates(lat, lng, radius)
+      ).rejects.toThrow('Cache service error')
+    })
+
+    it('should handle transformation errors', async () => {
+      jest.spyOn(landmarkRepository, 'findByGeohash').mockResolvedValue(mockDbLandmarks)
+      jest.spyOn(transformerService, 'transformLandmarks')
+        .mockImplementation(() => {
+          throw new TransformationError('Transformation failed')
+        })
+
+      await expect(
+        service.processLandmarksByCoordinates(lat, lng, radius)
+      ).rejects.toThrow('Transformation failed')
+    })
+
+    it('should handle invalid geohash errors', async () => {
+      const invalidLat = 91 // Invalid latitude
+      await expect(
+        service.processLandmarksByCoordinates(invalidLat, lng, radius)
+      ).rejects.toThrow('Invalid coordinates')
     })
   })
 

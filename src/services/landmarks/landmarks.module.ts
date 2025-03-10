@@ -1,17 +1,15 @@
-import { Module } from '@nestjs/common'
-import {
-  LandmarksSearchService,
-  LandmarksProcessorService,
-  LandmarksTransformerService,
-  LandmarksService,
-} from '../services/landmarks'
-import { RepositoryModule } from './repository.module'
-import { OverpassModule } from './overpass.module'
-import { LandmarksController } from '../controllers/landmarks.controller'
-import { CacheServiceModule } from './cache.module'
+import { Logger, Module } from '@nestjs/common'
+import { LandmarksService } from './landmarks.service'
+import { LandmarksSearchService } from './landmarks-search.service'
+import { LandmarksProcessorService } from './landmarks-processor.service'
+import { LandmarksTransformerService } from './landmarks-transformer.service'
+import { OverpassModule } from '../overpass/overpass.module'
+import { CacheServiceModule } from '../cache.module'
+import { AuthModule } from '../auth/auth.module'
+import { RepositoryModule } from '../../repositories/repository.module'
+import { LandmarksController } from '../../controllers/landmarks.controller'
 import { ConfigModule } from '@nestjs/config'
-import { AuthGuard } from '../controllers/guard/auth.guard'
-import { AuthModule } from './auth.module'
+import { AuthGuard } from '../../controllers/guard/auth.guard'
 
 /**
  * Module managing landmark-related functionality
@@ -27,6 +25,7 @@ import { AuthModule } from './auth.module'
     AuthModule, // Required for JwtService used by AuthGuard
   ],
   providers: [
+    Logger,
     // Auth guard for API protection
     AuthGuard,
 

@@ -7,6 +7,8 @@ import * as os from 'os'
 import { v4 as uuidv4 } from 'uuid'
 import { LANDMARKS_QUEUE } from '../../../constants/queue.constants'
 import { LandmarkProcessingJob } from '../../../interfaces/job.interface'
+import { ErrorHandler } from '../../../exceptions/error-handling'
+import { LandmarkQueueConsumerException } from '../../../exceptions/api.exceptions'
 
 /**
  * Consumes jobs from the landmarks queue and processes them
@@ -78,20 +80,11 @@ export class LandmarksQueueConsumer extends WorkerHost {
           processingTime: `${Date.now() - (timestamp ? new Date(timestamp).getTime() : Date.now())}ms`,
         },
       }
-    } catch (error) {
-      this.logger.error(
-        `Worker ${this.workerId} error processing job ${job.id}: ${(error as Error).message}`,
-        (error as Error).stack,
-      )
-
-      // Update webhook request status to failed
-      await this.webhookRequestRepository.markAsFailed(
-        requestId,
-        (error as Error).message,
-      )
-
-      // Rethrow the error to let BullMQ handle retries
-      throw error
+    } catch (error: unknown) {
+      ErrorHandler.handle(error, LandmarkQueueConsumerException, {
+        context: 'Landmarks queue consumer',
+        logger: this.logger,
+      })
     }
   }
 

@@ -32,7 +32,7 @@ export const LandmarksSchema = z
       .transform((val) => parseFloat(val))
       .pipe(CoordinateNumberSchema.lng),
   })
-  .describe('coordinate-query-schema')
+  .describe('landmark-coordinates-schema')
 
 // Define the location schema
 export const LandmarkLocationSchemaDto = z.object({
