@@ -20,6 +20,26 @@ export class LandmarksTransformerService {
         lat: landmark.centerLat,
         lng: landmark.centerLng,
       },
+      ...(landmark.address && { address: landmark.address }),
+      ...(landmark.wiki ||
+      landmark.website ||
+      landmark.openingHours ||
+      landmark.accessibility ||
+      landmark.tourism
+        ? {
+            moreInfo: {
+              ...(landmark.wiki && { wiki: landmark.wiki }),
+              ...(landmark.website && { website: landmark.website }),
+              ...(landmark.openingHours && {
+                openingHours: landmark.openingHours,
+              }),
+              ...(landmark.accessibility && {
+                accessibility: landmark.accessibility,
+              }),
+              ...(landmark.tourism && { tourism: landmark.tourism }),
+            },
+          }
+        : {}),
     }))
   }
 }

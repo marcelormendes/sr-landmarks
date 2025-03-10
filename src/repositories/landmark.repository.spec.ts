@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { LandmarkRepository } from './landmark.repository'
 import { PrismaService } from '../services/prisma.service'
 import { DatabaseException } from '../exceptions/api.exceptions'
+import { Logger } from '@nestjs/common'
 
 describe('LandmarkRepository', () => {
   let repository: LandmarkRepository
@@ -39,6 +40,16 @@ describe('LandmarkRepository', () => {
               update: jest.fn(),
               delete: jest.fn(),
             },
+          },
+        },
+        {
+          provide: Logger,
+          useValue: {
+            log: jest.fn(),
+            error: jest.fn(),
+            warn: jest.fn(),
+            debug: jest.fn(),
+            verbose: jest.fn(),
           },
         },
       ],

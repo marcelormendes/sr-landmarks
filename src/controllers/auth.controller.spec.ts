@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { AuthController } from './auth.controller'
-import { AuthService } from '../services/auth.service'
-import { UnauthorizedException } from '@nestjs/common'
+import { AuthService } from '../services/auth/auth.service'
+import { AuthUnAuthorizedException } from '../exceptions/api.exceptions'
+import { HttpStatus } from '@nestjs/common'
 
 describe('AuthController', () => {
   let controller: AuthController
@@ -54,7 +55,7 @@ describe('AuthController', () => {
 
     it('should throw UnauthorizedException when no API key is provided', async () => {
       await expect(controller.getToken({ apiKey: '' })).rejects.toThrow(
-        UnauthorizedException,
+        AuthUnAuthorizedException,
       )
       expect(authService.generateToken).not.toHaveBeenCalled()
     })
@@ -64,10 +65,10 @@ describe('AuthController', () => {
 
       authService.generateToken = jest
         .fn()
-        .mockRejectedValue(new UnauthorizedException('Invalid API key'))
+        .mockRejectedValue(new AuthUnAuthorizedException('Invalid API key', HttpStatus.UNAUTHORIZED))
 
       await expect(controller.getToken({ apiKey })).rejects.toThrow(
-        UnauthorizedException,
+        AuthUnAuthorizedException,
       )
       expect(authService.generateToken).toHaveBeenCalledWith(apiKey)
     })

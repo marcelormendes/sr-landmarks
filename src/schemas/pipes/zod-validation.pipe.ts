@@ -2,29 +2,34 @@ import {
   PipeTransform,
   Injectable,
   ArgumentMetadata,
-  BadRequestException,
+  HttpStatus,
+  Logger,
 } from '@nestjs/common'
-import { ZodError, ZodSchema } from 'zod'
-import { InvalidCoordinatesException } from '../../exceptions/api.exceptions'
-import { createTestSafeLogger } from '../../utils/test-utils'
+import { ZodSchema } from 'zod'
+import {
+  InvalidCoordinatesException,
+  ZodCustomError,
+} from '../../exceptions/api.exceptions'
+import { ErrorHandler } from 'src/exceptions/error-handling'
 
 @Injectable()
 export class EnhancedZodValidationPipe implements PipeTransform {
-  private readonly logger = createTestSafeLogger(EnhancedZodValidationPipe.name)
-
-  constructor(private schema: ZodSchema) {}
+  constructor(
+    private schema: ZodSchema,
+    private logger: Logger,
+  ) {}
 
   transform(value: unknown, _metadata: ArgumentMetadata): unknown {
-    // If we have no value or an empty object
-    if (
-      !value ||
-      (typeof value === 'object' && Object.keys(value).length === 0)
-    ) {
-      this.logger.error('No data provided or empty object')
-      throw new BadRequestException('No data provided')
-    }
-
     try {
+      // If we have no value or an empty object
+      if (
+        !value ||
+        (typeof value === 'object' && Object.keys(value).length === 0)
+      ) {
+        this.logger.error('No data provided or empty object')
+        throw new ZodCustomError('No data provided', HttpStatus.BAD_REQUEST)
+      }
+
       // If it's a primitive type (string, number, etc), use it directly
       if (typeof value !== 'object' || value === null) {
         return this.schema.parse(value)
@@ -38,45 +43,32 @@ export class EnhancedZodValidationPipe implements PipeTransform {
           ? value
           : Object.assign({}, value)
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = this.schema.parse(rawValue)
-      return result
+      return this.schema.parse(rawValue)
     } catch (error: unknown) {
-      if (error instanceof ZodError) {
-        const formattedErrors = error.errors.map((err) => ({
-          field: err.path.join('.'),
-          message: err.message,
-        }))
-
-        this.logger.error(
-          `Validation error: ${JSON.stringify(formattedErrors)}`,
-        )
-        this.logger.error(`Original error: ${JSON.stringify(error.errors)}`)
-
-        // For coordinates-related schemas, use the specialized exception
-        if (
-          this.schema.description?.includes('landmark') ||
-          _metadata.data?.includes('lat') ||
-          _metadata.data?.includes('lng')
-        ) {
-          throw new InvalidCoordinatesException(
-            'Invalid coordinates or parameters',
-            formattedErrors,
-          )
-        } else {
-          // For other schemas, use the general BadRequestException
-          throw new BadRequestException({
-            message: 'Validation failed',
-            details: formattedErrors,
-          })
-        }
+      // If we have no value or an empty object
+      if (
+        !value ||
+        (typeof value === 'object' && Object.keys(value).length === 0)
+      ) {
+        this.logger.error('No data provided or empty object')
+        throw new ZodCustomError('No data provided', HttpStatus.BAD_REQUEST)
       }
 
-      // Log and re-throw other errors
-      const err = error as Error
-      this.logger.error(`Unexpected validation error: ${err.message}`)
-      this.logger.error(`Error stack: ${err.stack}`)
-      throw error
+      if (
+        this.schema.description?.includes('landmark') ||
+        _metadata.data?.includes('lat') ||
+        _metadata.data?.includes('lng')
+      ) {
+        throw new InvalidCoordinatesException(
+          'Invalid coordinates or parameters',
+          HttpStatus.BAD_REQUEST,
+        )
+      }
+
+      ErrorHandler.handle(error, ZodCustomError, {
+        context: 'Zod validation pipe',
+        logger: this.logger,
+      })
     }
   }
 }

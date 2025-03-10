@@ -87,7 +87,7 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document)
 
   // Add global exception filter with config service
-  app.useGlobalFilters(new GlobalExceptionFilter(configService))
+  app.useGlobalFilters(new GlobalExceptionFilter())
 
   // Configure body parsing with reasonable limits
   app.use(json({ limit: '1mb' }))
@@ -123,8 +123,11 @@ async function bootstrap() {
   )
 }
 
-void bootstrap().catch((err: unknown) => {
-  const error = err as Error
-  Logger.error(`Error during bootstrap: ${error.message}`, error.stack)
+void bootstrap().catch((error: unknown) => {
+  if (error instanceof Error) {
+    Logger.error(`Application startup failed: ${error.message}`, error.stack)
+    process.exit(1)
+  }
+  Logger.error('Unknown error occurred during application startup')
   process.exit(1)
 })

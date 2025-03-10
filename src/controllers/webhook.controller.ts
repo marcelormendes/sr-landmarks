@@ -7,13 +7,12 @@ import {
   HttpCode,
   UseGuards,
   Logger,
-  NotFoundException,
-  BadRequestException,
-  InternalServerErrorException,
   Version,
+  HttpStatus,
 } from '@nestjs/common'
 import { v4 as uuidv4 } from 'uuid'
-import { WebhookService } from '../services/webhook.service'
+import { WebhookService } from '../services/webhook/webhook.service'
+import { LandmarksProcessorService } from '../services/landmarks/landmarks-processor.service'
 import { WebhookSchema, UuidSchema } from '../schemas/webhook.schema'
 import { EnhancedZodValidationPipe } from '../schemas/pipes/zod-validation.pipe'
 import { AuthGuard } from './guard/auth.guard'
@@ -37,9 +36,13 @@ import {
   RESPONSE_MESSAGES,
   HTTP_STATUS,
 } from '../constants'
-import { LandmarksProcessorService } from '../services/landmarks/landmarks-processor.service'
 import { WebhookType } from '@prisma/client'
 import { ConfigService } from '@nestjs/config'
+import { ErrorHandler } from '../exceptions/error-handling'
+import {
+  WebhookControllerException,
+  WebhookServiceException,
+} from '../exceptions/api.exceptions'
 /**
  * Controller for handling webhook endpoints.
  * Processes coordinate data and returns landmark information.
@@ -48,11 +51,11 @@ import { ConfigService } from '@nestjs/config'
 @ApiTags('webhook')
 @Controller('webhook')
 export class WebhookController {
-  private readonly logger = new Logger(WebhookController.name)
   constructor(
     private webhookService: WebhookService,
     private landmarksProcessorService: LandmarksProcessorService,
     private configService: ConfigService,
+    private readonly logger: Logger,
   ) {}
 
   /**
@@ -68,7 +71,12 @@ export class WebhookController {
   @ApiBody({ type: WebhookRequestDto })
   @ApiResponse(WebhookApiDocs.RESPONSES.ACCEPTED)
   async webhookRequest(
-    @Body(new EnhancedZodValidationPipe(WebhookSchema))
+    @Body(
+      new EnhancedZodValidationPipe(
+        WebhookSchema,
+        new Logger('WebhookValidation'),
+      ),
+    )
     coordinates: WebhookRequestDto,
   ): Promise<WebhookResponseDto> {
     const { lat, lng, radius = DEFAULT_SEARCH_RADIUS } = coordinates
@@ -93,11 +101,10 @@ export class WebhookController {
         message: RESPONSE_MESSAGES.WEBHOOK_RECEIVED,
       }
     } catch (error) {
-      this.logger.error(
-        `Error processing webhook: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error instanceof Error ? error.stack : 'No stack trace',
-      )
-      throw new InternalServerErrorException('Error processing webhook')
+      ErrorHandler.handle(error, WebhookControllerException, {
+        context: 'Webhook controller',
+        logger: this.logger,
+      })
     }
   }
 
@@ -111,14 +118,24 @@ export class WebhookController {
   @ApiResponse(WebhookApiDocs.RESPONSES.STATUS_OK)
   @ApiResponse(WebhookApiDocs.RESPONSES.NOT_FOUND)
   async getWebhookStatus(
-    @Param('uuid', new EnhancedZodValidationPipe(UuidSchema)) requestId: string,
+    @Param(
+      'uuid',
+      new EnhancedZodValidationPipe(
+        UuidSchema,
+        new Logger('WebhookValidation'),
+      ),
+    )
+    requestId: string,
   ): Promise<WebhookStatusDto> {
     try {
       const webhookRequest =
         await this.webhookService.getWebhookStatus(requestId)
 
       if (!webhookRequest) {
-        throw new NotFoundException(ERROR_MESSAGES.WEBHOOK_REQUEST_NOT_FOUND)
+        throw new WebhookServiceException(
+          ERROR_MESSAGES.WEBHOOK_REQUEST_NOT_FOUND,
+          HttpStatus.NOT_FOUND,
+        )
       }
 
       return {
@@ -133,21 +150,16 @@ export class WebhookController {
         },
         error: webhookRequest.error || undefined,
       }
-    } catch (error) {
-      // Rethrow NotFoundException and BadRequestException
-      if (
-        error instanceof NotFoundException ||
-        error instanceof BadRequestException
-      ) {
-        throw error
+    } catch (error: unknown) {
+      if (error instanceof WebhookServiceException) {
+        ErrorHandler.handle(error, WebhookServiceException, {
+          context: 'Webhook controller',
+          logger: this.logger,
+        })
       }
-      // For any other errors, log and wrap in a generic error
-      this.logger.error(
-        `Error getting webhook status: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      )
-      throw new InternalServerErrorException({
-        success: false,
-        message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      ErrorHandler.handle(error, WebhookControllerException, {
+        context: 'Webhook controller',
+        logger: this.logger,
       })
     }
   }
@@ -177,7 +189,12 @@ export class WebhookController {
     description: 'Request timeout',
   })
   async webhookRequestSync(
-    @Body(new EnhancedZodValidationPipe(WebhookSchema))
+    @Body(
+      new EnhancedZodValidationPipe(
+        WebhookSchema,
+        new Logger('WebhookValidation'),
+      ),
+    )
     coordinates: WebhookRequestDto,
   ): Promise<WebhookResponseDto> {
     const { lat, lng, radius = DEFAULT_SEARCH_RADIUS } = coordinates
@@ -225,34 +242,18 @@ export class WebhookController {
         message: 'Coordinates processed successfully',
       }
     } catch (error) {
-      // Log the full error for debugging
-      this.logger.error(
-        `Error in synchronous webhook ${requestId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error instanceof Error ? error.stack : undefined,
-      )
-
-      // Mark the request as failed with a generic error message
       await this.webhookService.markAsFailed(
         requestId,
-        error instanceof Error && error.message === 'Request timeout'
-          ? 'Request timeout exceeded'
-          : ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+        ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       )
-
-      // Return a clean error response
-      if (error instanceof Error && error.message === 'Request timeout') {
-        throw new InternalServerErrorException({
-          success: false,
-          requestId,
-          message: 'Request timeout exceeded',
-        })
-      }
-
-      throw new InternalServerErrorException({
-        success: false,
+      this.logger.error(
+        `Error in synchronous webhook: ${error instanceof Error ? error.message : 'Unknown error'}`,
         requestId,
-        message: ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
-      })
+      )
+      throw new WebhookControllerException(
+        ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      )
     } finally {
       clearTimeout(timeoutId)
     }

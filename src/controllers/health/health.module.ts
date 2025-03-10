@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common'
 import { TerminusModule } from '@nestjs/terminus'
-import { HealthController } from '../controllers/health/health.controller'
-import { RedisHealthIndicator } from '../controllers/health/redis.health'
-import { QueueHealthIndicator } from '../controllers/health/queue.health'
-import { PrismaModule } from './prisma.module'
+import { HealthController } from '../../controllers/health/health.controller'
+import { RedisHealthIndicator } from '../../controllers/health/redis.health'
+import { QueueHealthIndicator } from '../../controllers/health/queue.health'
+import { PrismaModule } from '../../services/prisma.module'
 import { BullModule } from '@nestjs/bullmq'
 import { Redis } from 'ioredis'
-import { REDIS_CLIENT } from '../constants/tokens'
+import { REDIS_CLIENT } from '../../constants/tokens'
 
 @Module({
   imports: [

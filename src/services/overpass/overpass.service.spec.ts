@@ -104,5 +104,38 @@ describe('OverpassService', () => {
         service.findNearbyLandmarks(lat, lng, radius, geohash),
       ).rejects.toThrow('API error')
     })
+
+    it('should handle cache service errors', async () => {
+      jest.spyOn(cacheHandler, 'get').mockRejectedValue(new Error('Cache error'))
+      jest
+        .spyOn(pipelineService, 'executePipeline')
+        .mockResolvedValue(mockLandmarks)
+
+      await expect(
+        service.findNearbyLandmarks(lat, lng, radius, geohash),
+      ).rejects.toThrow('Cache error')
+    })
+
+    it('should handle invalid coordinates', async () => {
+      jest.spyOn(cacheHandler, 'get').mockResolvedValue(undefined)
+      jest
+        .spyOn(pipelineService, 'executePipeline')
+        .mockRejectedValue(new Error('Invalid coordinates'))
+
+      await expect(
+        service.findNearbyLandmarks(91, lng, radius, geohash),
+      ).rejects.toThrow('Invalid coordinates')
+    })
+
+    it('should handle pipeline service timeout', async () => {
+      jest.spyOn(cacheHandler, 'get').mockResolvedValue(undefined)
+      jest
+        .spyOn(pipelineService, 'executePipeline')
+        .mockRejectedValue(new Error('Pipeline timeout'))
+
+      await expect(
+        service.findNearbyLandmarks(lat, lng, radius, geohash),
+      ).rejects.toThrow('Pipeline timeout')
+    })
   })
 })

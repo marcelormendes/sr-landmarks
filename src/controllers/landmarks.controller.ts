@@ -7,6 +7,7 @@ import { LandmarksApiDocs } from './docs/api-docs'
 import { HTTP_STATUS } from '../constants'
 import { Public } from '../decorators/public.decorator'
 import { LandmarksSchema, LandmarkLocation } from '../schemas/landmarks.schema'
+
 /**
  * Controller for handling landmark-related API endpoints
  * All endpoints are public (no authentication required)
@@ -37,7 +38,12 @@ export class LandmarksController {
   @ApiResponse(LandmarksApiDocs.RESPONSES.BAD_REQUEST)
   @ApiResponse(LandmarksApiDocs.RESPONSES.TOO_MANY_REQUESTS)
   async getLandmarks(
-    @Query(new EnhancedZodValidationPipe(LandmarksSchema))
+    @Query(
+      new EnhancedZodValidationPipe(
+        LandmarksSchema,
+        new Logger('LandmarkValidation'),
+      ),
+    )
     coordinates: LandmarkLocation,
   ): Promise<LandmarkDto[]> {
     this.logger.log(

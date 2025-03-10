@@ -1,8 +1,8 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
-import { JWT_CONSTANTS } from '../constants/auth.constants'
-import { JwtPayload } from '../interfaces/auth.interface'
+import { JWT_CONSTANTS } from '../../constants/auth.constants'
+import { JwtPayload } from '../../interfaces/auth.interface'
 /**
  * Service for handling authentication and JWT token operations
  */
@@ -55,10 +55,7 @@ export class AuthService {
       return await this.jwtService.verifyAsync<JwtPayload>(token, {
         secret: this.apiSecret,
       })
-    } catch (error) {
-      this.logger.warn(
-        `Token verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      )
+    } catch (_error: unknown) {
       throw new UnauthorizedException('Invalid token')
     }
   }

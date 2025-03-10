@@ -1,11 +1,11 @@
-import { WebhookController } from '../controllers/webhook.controller'
-import { WebhookService } from '../services/webhook.service'
-import { Module } from '@nestjs/common'
-import { LandmarksModule } from './landmarks.module'
+import { WebhookController } from '../../controllers/webhook.controller'
+import { Module, Logger } from '@nestjs/common'
+import { WebhookService } from './webhook.service'
 import { ConfigModule } from '@nestjs/config'
-import { RepositoryModule } from './repository.module'
-import { LandmarksQueueModule } from './landmarks-queue.module'
-import { AuthModule } from './auth.module'
+import { RepositoryModule } from '../../repositories/repository.module'
+import { LandmarksModule } from '../landmarks/landmarks.module'
+import { LandmarksQueueModule } from '../landmarks/queue/landmarks-queue.module'
+import { AuthModule } from '../auth/auth.module'
 
 /**
  * Module for webhook functionality.
@@ -26,7 +26,7 @@ import { AuthModule } from './auth.module'
     AuthModule, // Required for JwtService used by AuthGuard
   ],
   controllers: [WebhookController],
-  providers: [WebhookService],
+  providers: [WebhookService, Logger],
   exports: [WebhookService],
 })
 export class WebhookModule {}

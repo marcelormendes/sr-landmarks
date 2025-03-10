@@ -3,14 +3,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { TerminusModule } from '@nestjs/terminus'
 import { BullModule } from '@nestjs/bullmq'
 import { CacheModule } from '@nestjs/cache-manager'
-import configuration from '../config/configuration'
-import { LandmarksQueueModule } from './landmarks-queue.module'
-import { LandmarksModule } from './landmarks.module'
-import { RepositoryModule } from './repository.module'
-import { PrismaModule } from './prisma.module'
-import { HealthModule } from './health.module'
-import { OverpassModule } from './overpass.module'
-import { createRedisCacheConfig } from '../config/redis.config'
+import configuration from './config/configuration'
+import { createRedisCacheConfig } from './config/redis.config'
+import { RepositoryModule } from './repositories/repository.module'
+import { HealthModule } from './controllers/health/health.module'
+import { PrismaModule } from './services/prisma.module'
+import { OverpassModule } from './services/overpass/overpass.module'
+import { LandmarksModule } from './services/landmarks/landmarks.module'
+import { LandmarksQueueModule } from './services/landmarks/queue/landmarks-queue.module'
 
 /**
  * Minimal module for worker-only instances
@@ -48,9 +48,13 @@ import { createRedisCacheConfig } from '../config/redis.config'
           },
           // Worker-specific settings
           worker: {
-            lockDuration: 30000, // 30 seconds
-            stalledInterval: 15000, // Check for stalled jobs every 15 seconds
-            maxStalledCount: 3, // Allow 3 stalls before marking as failed
+            lockDuration: configService.get<number>('worker.lockDuration'),
+            stalledInterval: configService.get<number>(
+              'worker.stalledInterval',
+            ),
+            maxStalledCount: configService.get<number>(
+              'worker.maxStalledCount',
+            ),
           },
         }
       },

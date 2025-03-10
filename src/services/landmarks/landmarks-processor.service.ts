@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { OverpassService } from '../overpass/overpass.service'
+import { CacheService } from '../cache.service'
+import { LandmarksTransformerService } from './landmarks-transformer.service'
 import { LandmarkDto } from '../../dto/landmark.dto'
 import { LandmarkRepository } from '../../repositories/landmark.repository'
-import { CacheService } from '../cache.service'
 import { encodeGeohash } from '../../utils/coordinate.util'
-import { LandmarksTransformerService } from './landmarks-transformer.service'
 import { CACHE_TTL_3600_SECONDS } from '../../constants/validation.constants'
 
 /**
@@ -32,6 +32,11 @@ export class LandmarksProcessorService {
     lng: number,
     radius: number,
   ): Promise<LandmarkDto[]> {
+    // Validate coordinates
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      throw new Error('Invalid coordinates')
+    }
+
     // Create geohash for the coordinates
     const geohash = encodeGeohash(lat, lng)
     this.logger.log(
@@ -112,6 +117,10 @@ export class LandmarksProcessorService {
       radius,
       geohash,
     )
+
+    if (!landmarksDto) {
+      return []
+    }
 
     this.logger.log(
       `Retrieved ${landmarksDto.length} landmarks from Overpass API`,

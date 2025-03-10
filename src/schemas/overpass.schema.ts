@@ -1,4 +1,4 @@
-import { OVERPASS_ELEMENT_TYPES } from 'src/constants/overpass.constants'
+import { OVERPASS_ELEMENT_TYPES } from '../constants/overpass.constants'
 import { z } from 'zod'
 
 export const OverpassElementSchema = z.object({

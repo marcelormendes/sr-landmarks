@@ -41,4 +41,16 @@ export const envSchema = z.object({
     .string()
     .transform((val) => parseInt(val, 10))
     .default('60000'),
+  WORKER_LOCK_DURATION: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .default('30000'),
+  WORKER_STALLED_INTERVAL: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .default('15000'),
+  WORKER_MAX_STALLED_COUNT: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .default('3'),
 })

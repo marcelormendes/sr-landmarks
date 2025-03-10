@@ -58,32 +58,48 @@ export class HealthController {
   async check(): Promise<HealthCheckResult> {
     this.logger.log('Running health check')
 
-    return this.health.check([
-      // Check Redis connection
-      () => this.redis.checkHealth('redis'),
+    try {
+      return this.health.check([
+        // Check Redis connection
+        () => this.redis.checkHealth('redis'),
 
-      // Check database connection
-      async () => {
-        try {
-          await this.prisma.$queryRaw`SELECT 1`
-          return { prisma: { status: 'up' } }
-        } catch (error: unknown) {
-          const err = error as Error
-          this.logger.error(`Database health check failed: ${err.message}`)
-          return { prisma: { status: 'down', message: err.message } }
-        }
-      },
+        // Check database connection
+        async () => {
+          try {
+            await this.prisma.$queryRaw`SELECT 1`
+            return { prisma: { status: 'up' } }
+          } catch (error: unknown) {
+            if (error instanceof Error) {
+              this.logger.error(
+                `Database health check failed: ${error.message}`,
+              )
+              return { prisma: { status: 'down', message: error.message } }
+            }
+            this.logger.error(
+              'Unknown error occurred during database health check',
+            )
+            return { prisma: { status: 'down', message: 'Unknown error' } }
+          }
+        },
 
-      // Check queue health
-      () => this.queueHealth.isHealthy('landmarksQueue'),
+        // Check queue health
+        () => this.queueHealth.isHealthy('landmarksQueue'),
 
-      // Check disk space (at least 250MB free)
-      () =>
-        this.disk.checkStorage('disk', { path: '/', thresholdPercent: 0.9 }),
+        // Check disk space (at least 250MB free)
+        () =>
+          this.disk.checkStorage('disk', { path: '/', thresholdPercent: 0.9 }),
 
-      // Check memory (heap usage under 250MB)
-      () => this.memory.checkHeap('memory', 250 * 1024 * 1024),
-    ])
+        // Check memory (heap usage under 250MB)
+        () => this.memory.checkHeap('memory', 250 * 1024 * 1024),
+      ])
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        this.logger.error(`Health check failed: ${error.message}`)
+        throw new Error(`Health check failed: ${error.message}`)
+      }
+      this.logger.error('Unknown error occurred during health check')
+      throw new Error('Health check failed: Unknown error')
+    }
   }
 
   /**
@@ -98,45 +114,5 @@ export class HealthController {
     return this.health.check([
       () => this.queueHealth.isHealthy('landmarksQueue'),
     ])
-  }
-
-  /**
-   * Detailed Redis inspection endpoint for debugging
-   */
-  @Get('redis-debug')
-  @Public()
-  @ApiOperation({ summary: 'Debug Redis cache status' })
-  async debugRedis() {
-    this.logger.log('Running Redis debug inspection')
-
-    try {
-      // Force a cache test
-      const connectionWorking = await this.redis.testRedisConnection()
-
-      // Get all Redis keys with our cache prefix
-      const cacheKeys = await this.redis.getRedisKeys('cache:*')
-
-      // Get all Redis keys (for debugging)
-      const allKeys = await this.redis.getRedisKeys('*')
-
-      return {
-        status: connectionWorking ? 'ok' : 'error',
-        connection: connectionWorking ? 'connected' : 'disconnected',
-        cacheKeys: cacheKeys.keys,
-        cacheKeyCount: cacheKeys.count,
-        allKeys: allKeys.keys,
-        allKeyCount: allKeys.count,
-        timestamp: new Date().toISOString(),
-      }
-    } catch (error) {
-      this.logger.error(
-        `Redis debug check failed: ${error instanceof Error ? error.message : String(error)}`,
-      )
-      return {
-        status: 'error',
-        error: error instanceof Error ? error.message : String(error),
-        timestamp: new Date().toISOString(),
-      }
-    }
   }
 }

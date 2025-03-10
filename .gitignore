@@ -59,3 +59,12 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Prisma
+prisma/dev.db
+prisma/dev.db-journal
+prisma/dev.db-trace.json
+prisma/dev.db-trace.jsonl
+prisma/dev.db-trace.ndjson
+prisma/dev.db-trace.txt
+prisma/dev.db-trace.txt.gz

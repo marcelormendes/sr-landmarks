@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common'
 import { LandmarkDto } from '../../dto/landmark.dto'
 import { CacheService } from '../cache.service'
 import { OverpassPipelineService } from './overpass-pipeline.service'
+import { ErrorHandler } from '../../exceptions/error-handling'
+import { OverpassApiException } from '../../exceptions/api.exceptions'
 
 /**
  * Service for interacting with the Overpass API to find nearby landmarks.
@@ -46,15 +48,16 @@ export class OverpassService {
 
       return landmarksDto
     } catch (error: unknown) {
-      const err = error as Error
-      this.logger.error(`Failed to fetch landmarks: ${err.message}`, err.stack)
-
       // Try to get from cache as a fallback
       const cachedData = await this.getFromCacheAsFallback(geohash)
       if (cachedData) {
         return cachedData
       }
-      throw error
+
+      ErrorHandler.handle(error, OverpassApiException, {
+        context: 'Overpass service',
+        logger: this.logger,
+      })
     }
   }
 

@@ -1,9 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { HttpStatus, Injectable, Logger } from '@nestjs/common'
 import { LandmarkDto } from '../../dto/landmark.dto'
 import { LandmarksTransformerService } from './landmarks-transformer.service'
+import { CacheService } from '../cache.service'
 import { LandmarkRepository } from '../../repositories/landmark.repository'
 import { encodeGeohash } from '../../utils/coordinate.util'
-import { CacheService } from '../cache.service'
+import { LandmarkNotFoundException } from '../../exceptions/api.exceptions'
 /**
  * Service responsible for searching landmarks based on coordinates.
  * Handles the retrieval, transformation, and caching of landmark data.
@@ -53,8 +54,9 @@ export class LandmarksSearchService {
     const dbLandmarks = await this.landmarkRepository.findByGeohash(cacheKey)
 
     if (!dbLandmarks.length) {
-      throw new NotFoundException(
+      throw new LandmarkNotFoundException(
         `No landmarks found for coordinates (${cacheKey})`,
+        HttpStatus.NOT_FOUND,
       )
     }
 

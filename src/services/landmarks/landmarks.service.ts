@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common'
 import { LandmarkDto } from '../../dto/landmark.dto'
 import { roundCoordinate } from '../../utils/coordinate.util'
 import { LandmarksSearchService } from './landmarks-search.service'
+import { LandmarkServiceException } from '../../exceptions/api.exceptions'
+import { ErrorHandler } from '../../exceptions/error-handling'
 
 /**
  * Service for handling landmark-related operations.
@@ -36,17 +38,10 @@ export class LandmarksService {
         roundedLat,
         roundedLng,
       )
-    } catch (error) {
-      // Re-throw known exceptions
-      if (error instanceof Error) {
-        throw error
-      }
-
-      // If no landmarks are found, process new landmarks from Overpass API
-      this.logger.log(
-        `No landmarks found for this lat: ${roundedLat} and lng: ${roundedLng}`,
-      )
-      return []
+    } catch (error: unknown) {
+      ErrorHandler.handle(error, LandmarkServiceException, {
+        context: 'Landmarks service',
+      })
     }
   }
 }

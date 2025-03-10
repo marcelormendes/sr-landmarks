@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { UnauthorizedException } from '@nestjs/common'
 import { AuthService } from './auth.service'
-import { JWT_CONSTANTS } from '../constants/auth.constants'
+import { JWT_CONSTANTS } from '../../constants/auth.constants'
 
 describe('AuthService', () => {
   let service: AuthService

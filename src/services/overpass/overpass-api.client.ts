@@ -1,7 +1,9 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { OverpassApiException } from '../../exceptions/api.exceptions'
 import { OverpassApiResponse } from '../../interfaces/overpass.api.response'
+import { OverpassResponseSchema } from '../../schemas/overpass.schema'
+import { ErrorHandler } from '../../exceptions/error-handling'
 
 /**
  * Client for making HTTP requests to the Overpass API.
@@ -12,7 +14,6 @@ export class OverpassApiClient {
   private readonly apiUrl: string | undefined
   private readonly timeout: number | undefined
   private readonly maxRetries: number | undefined
-  private readonly logger = new Logger(OverpassApiClient.name)
 
   constructor(private readonly configService: ConfigService) {
     this.apiUrl = this.configService.get<string>('overpass.url')
@@ -29,10 +30,7 @@ export class OverpassApiClient {
     retryCount = 0,
   ): Promise<OverpassApiResponse> {
     if (!this.apiUrl) {
-      throw new OverpassApiException(
-        'Overpass API URL is missing',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      )
+      throw new Error('Overpass API URL is missing')
     }
 
     if (!this.timeout) {
@@ -59,25 +57,17 @@ export class OverpassApiClient {
         )
       }
 
-      return response.json() as Promise<OverpassApiResponse>
-    } catch (error) {
+      const data = await response.json()
+      return OverpassResponseSchema.parse(data)
+    } catch (error: unknown) {
       if (retryCount < this.maxRetries) {
-        // Exponential backoff: 2^retryCount * 100ms
-        const delay = Math.pow(2, retryCount) * 100
-        this.logger.warn(
-          `Retrying Overpass API request in ${delay}ms (attempt ${retryCount + 1}/${this.maxRetries})`,
-        )
-
-        await new Promise((resolve) => setTimeout(resolve, delay))
         return this.makeRequestWithRetry(query, retryCount + 1)
       }
 
-      if (error instanceof OverpassApiException) {
-        throw error
-      }
-
-      const err = error as Error
-      throw new OverpassApiException(`Request failed: ${err.message}`)
+      ErrorHandler.handle(error, OverpassApiException, {
+        context: 'Overpass API request',
+        logger: new Logger(OverpassApiClient.name),
+      })
     }
   }
 }
