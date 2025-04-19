@@ -7,7 +7,6 @@ import configuration from './common/config/configuration'
 import { AuthModule } from './modules/auth/auth.module'
 import { HealthModule } from './common/health/health.module'
 import { ZodModule } from './common/pipes/zod.module'
-import { RepositoryModule } from './common/repositories/repository.module'
 import { AuthGuard } from './common/guards/auth.guard'
 import { createRedisCacheConfig } from './common/config/redis.config'
 import { LandmarksModule } from './modules/landmarks/landmarks.module'
@@ -20,7 +19,6 @@ import { CacheServiceModule } from './common/cache/cache.module'
     AuthModule,
     CacheServiceModule,
     LandmarksModule,
-    RepositoryModule,
     WebhookModule,
     PrismaModule,
     HealthModule,

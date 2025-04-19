@@ -1,4 +1,4 @@
-import { OverpassResponse } from '../schemas/overpass.schema'
+import { OverpassResponse } from '@modules/overpass/overpass.schema'
 
 /**
  * Extended Overpass response interface that includes metadata

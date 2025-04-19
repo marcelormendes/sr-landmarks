@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common'
 import {
   OverpassResponse,
   OverpassElement,
-} from '../../schemas/overpass.schema'
+} from '@modules/overpass/overpass.schema'
 import {
   OVERPASS_TYPE_HIERARCHY,
   DEFAULT_LANDMARK_TYPE,
   OVERPASS_TAGS,
   OVERPASS_ADDRESS_TAGS,
-} from '../../constants/overpass.constants'
-import { LandmarkDto, MoreInfoDto } from '../../landmark.dto'
+} from '@shared/constants/overpass.constants'
+import { LandmarkDto, MoreInfoDto } from '@modules/landmarks/landmark.dto'
 
 /**
  * Processor for handling Overpass API responses.

@@ -1,11 +1,11 @@
 import { Module, Logger } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import { CacheServiceModule } from '../cache.module'
-import { OverpassApiClient } from './overpass-api.client'
-import { OverpassPipelineService } from './overpass-pipeline.service'
-import { OverpassQueryBuilder } from './overpass-query.builder'
-import { OverpassResponseProcessor } from './overpass-response.processor'
-import { OverpassService } from './overpass.service'
+import { CacheServiceModule } from '@common/cache/cache.module'
+import { OverpassApiClient } from '@modules/overpass/services/overpass-api.client'
+import { OverpassPipelineService } from '@modules/overpass/services/overpass-pipeline.service'
+import { OverpassQueryBuilder } from '@modules/overpass/services/overpass-query.builder'
+import { OverpassResponseProcessor } from '@modules/overpass/services/overpass-response.processor'
+import { OverpassService } from '@modules/overpass/services/overpass.service'
 
 /**
  * Module for handling Overpass API integration.

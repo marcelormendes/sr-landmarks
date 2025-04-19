@@ -9,8 +9,8 @@ import { ZodSchema } from 'zod'
 import {
   InvalidCoordinatesException,
   ZodCustomError,
-} from '../../exceptions/api.exceptions'
-import { ErrorHandler } from 'src/exceptions/error-handling'
+} from '@common/exceptions/api.exceptions'
+import { ErrorHandler } from '@common/exceptions/error-handling'
 
 @Injectable()
 export class EnhancedZodValidationPipe implements PipeTransform {

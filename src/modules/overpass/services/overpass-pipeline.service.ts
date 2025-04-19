@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { LandmarkDto } from '../../landmark.dto'
-import { OverpassApiException } from '../../exceptions/api.exceptions'
-import { ErrorHandler } from '../../exceptions/error-handling'
-import { OverpassApiClient } from './overpass-api.client'
-import { OverpassQueryBuilder } from './overpass-query.builder'
-import { OverpassResponseProcessor } from './overpass-response.processor'
+import { LandmarkDto } from '@modules/landmarks/landmark.dto'
+import { OverpassApiException } from '@common/exceptions/api.exceptions'
+import { ErrorHandler } from '@common/exceptions/error-handling'
+import { OverpassApiClient } from '@modules/overpass/services/overpass-api.client'
+import { OverpassQueryBuilder } from '@modules/overpass/services/overpass-query.builder'
+import { OverpassResponseProcessor } from '@modules/overpass/services/overpass-response.processor'
 
 /**
  * Service responsible for coordinating the Overpass API pipeline.

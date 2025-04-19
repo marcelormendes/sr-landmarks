@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { WebhookRequestRepository } from '../../common/repositories/repositories/webhook-request.repository'
-import { PrismaService } from '../services/prisma.service'
+import { WebhookRequestRepository } from '@modules/webhook/webhook-request.repository'
+import { PrismaService } from '@common/prisma/prisma.service'
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import { WebhookStatus, WebhookType } from '@prisma/client'
 

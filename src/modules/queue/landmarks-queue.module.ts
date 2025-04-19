@@ -4,11 +4,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { LandmarksQueueService } from './landmarks-queue.service'
 import { LandmarksQueueConsumer } from './landmarks-queue.consumer'
 import { LandmarksQueueEventsListener } from './landmarks-queue-events.listener'
-import { LandmarksProcessorService } from '../landmarks-processor.service'
-import { LANDMARKS_QUEUE } from '../../../constants/queue.constants'
-import { RepositoryModule } from '../../../repositories/repository.module'
-import { WebhookRequestRepository } from '../../../repositories/webhook-request.repository'
-import { LandmarksModule } from '../../landmarks.module'
+import { LandmarksProcessorService } from '@modules/landmarks/services/landmarks-processor.service'
+import { LANDMARKS_QUEUE } from '@shared/constants/queue.constants'
+import { WebhookRequestRepository } from '@modules/webhook/webhook-request.repository'
+import { LandmarksModule } from '@modules/landmarks/landmarks.module'
+import { WebhookModule } from '@modules/webhook/webhook.module'
 
 @Module({
   imports: [
@@ -27,7 +27,7 @@ import { LandmarksModule } from '../../landmarks.module'
     LandmarksModule,
     ConfigModule,
     // Import repository module to provide WebhookRequestRepository
-    RepositoryModule,
+    WebhookModule,
   ],
   providers: [
     LandmarksQueueService,

@@ -11,11 +11,11 @@ import {
   HttpStatus,
 } from '@nestjs/common'
 import { v4 as uuidv4 } from 'uuid'
-import { WebhookService } from '../services/webhook/webhook.service'
-import { LandmarksProcessorService } from '../services/landmarks/landmarks-processor.service'
-import { WebhookSchema, UuidSchema } from '../schemas/webhook.schema'
-import { EnhancedZodValidationPipe } from '../schemas/pipes/zod-validation.pipe'
-import { AuthGuard } from './guard/auth.guard'
+import { WebhookService } from '@modules/webhook/webhook.service'
+import { LandmarksProcessorService } from '@modules/landmarks/services/landmarks-processor.service'
+import { WebhookSchema, UuidSchema } from '@modules/webhook/webhook.schema'
+import { EnhancedZodValidationPipe } from '@common/pipes/zod-validation.pipe'
+import { AuthGuard } from '@common/guards/auth.guard'
 import {
   ApiTags,
   ApiBearerAuth,
@@ -29,20 +29,20 @@ import {
   WebhookResponseDto,
   WebhookStatusDto,
   WebhookApiDocs,
-} from '../dto/webhook.dto'
+} from '@modules/webhook/webhook.dto'
 import {
   ERROR_MESSAGES,
   DEFAULT_SEARCH_RADIUS,
   RESPONSE_MESSAGES,
   HTTP_STATUS,
-} from '../constants'
+} from '@shared/constants'
 import { WebhookType } from '@prisma/client'
 import { ConfigService } from '@nestjs/config'
-import { ErrorHandler } from '../exceptions/error-handling'
+import { ErrorHandler } from '@common/exceptions/error-handling'
 import {
   WebhookControllerException,
   WebhookServiceException,
-} from '../exceptions/api.exceptions'
+} from '@common/exceptions/api.exceptions'
 /**
  * Controller for handling webhook endpoints.
  * Processes coordinate data and returns landmark information.

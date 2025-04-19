@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { OverpassApiException } from '../../exceptions/api.exceptions'
-import { OverpassApiResponse } from '../../interfaces/overpass.api.response'
-import { OverpassResponseSchema } from '../../schemas/overpass.schema'
-import { ErrorHandler } from '../../exceptions/error-handling'
+import { OverpassApiException } from '@common/exceptions/api.exceptions'
+import { OverpassApiResponse } from '@shared/interfaces/overpass.api.response'
+import { OverpassResponseSchema } from '@modules/overpass/overpass.schema'
+import { ErrorHandler } from '@common/exceptions/error-handling'
 
 /**
  * Client for making HTTP requests to the Overpass API.

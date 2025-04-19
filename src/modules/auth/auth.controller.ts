@@ -7,14 +7,14 @@ import {
   Logger,
 } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'
-import { AuthService } from '../services/auth/auth.service'
-import { Public } from '../decorators/public.decorator'
-import { ApiKey, authSchema } from '../schemas/auth.schema'
-import { TokenResponseDto } from '../dto/auth.dto'
-import { EnhancedZodValidationPipe } from '../schemas/pipes/zod-validation.pipe'
-import { BEARER, ONE_HOUR } from '../constants/auth.constants'
-import { AuthUnAuthorizedException } from '../exceptions/api.exceptions'
-import { ErrorHandler } from '../exceptions/error-handling'
+import { AuthService } from '@modules/auth/auth.service'
+import { Public } from '@shared/decorators/public.decorator'
+import { ApiKey, authSchema } from '@modules/auth/auth.schema'
+import { TokenResponseDto } from '@modules/auth/auth.dto'
+import { EnhancedZodValidationPipe } from '@common/pipes/zod-validation.pipe'
+import { BEARER, ONE_HOUR } from '@shared/constants/auth.constants'
+import { AuthUnAuthorizedException } from '@common/exceptions/api.exceptions'
+import { ErrorHandler } from '@common/exceptions/error-handling'
 /**
  * Controller for authentication endpoints
  */

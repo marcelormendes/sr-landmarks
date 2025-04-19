@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { Logger } from '@nestjs/common'
-import { OverpassService } from './overpass.service'
-import { CacheService } from '../cache.service'
-import { OverpassPipelineService } from './overpass-pipeline.service'
-import { encodeGeohash } from '../../utils/coordinate.util'
+import { OverpassService } from '@modules/overpass/services/overpass.service'
+import { CacheService } from '@common/cache/cache.service'
+import { OverpassPipelineService } from '@modules/overpass/services/overpass-pipeline.service'
+import { encodeGeohash } from '@common/utils/coordinate.util'
 
 // Create a mock logger that doesn't log during tests
 const mockLogger = {

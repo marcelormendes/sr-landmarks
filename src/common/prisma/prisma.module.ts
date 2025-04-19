@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { PrismaService } from '../services/prisma.service'
+import { PrismaService } from '@common/prisma/prisma.service'
 
 /**
  * Module for database connectivity via Prisma ORM.

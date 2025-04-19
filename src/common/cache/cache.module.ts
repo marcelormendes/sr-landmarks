@@ -1,8 +1,8 @@
 import { Global, Module, Logger } from '@nestjs/common'
-import { CacheService } from '../services/cache.service'
+import { CacheService } from './cache.service'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { Redis } from 'ioredis'
-import { REDIS_CLIENT } from '../constants/tokens'
+import { REDIS_CLIENT } from '@shared/constants/tokens'
 
 /**
  * Global module providing enhanced cache functionality

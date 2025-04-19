@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { LandmarksController } from './landmarks.controller'
-import { LandmarksService } from '../services/landmarks/landmarks.service'
-import { LandmarksSchema } from '../schemas/landmarks.schema'
+import { LandmarksService } from '@modules/landmarks/services/landmarks.service'
+import { LandmarksSchema } from '@modules/landmarks/landmarks.schema'
 import { HttpStatus } from '@nestjs/common'
 
 // Create a mock logger that doesn't log during tests
@@ -14,9 +14,9 @@ const mockLogger = {
 }
 import { Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { AuthGuard } from './guard/auth.guard'
-import { EnhancedZodValidationPipe } from '../schemas/pipes/zod-validation.pipe'
-import { LandmarkNotFoundException, OverpassApiException, WebhookControllerException, AuthUnAuthorizedException, InvalidCoordinatesException, ZodCustomError } from '../exceptions/api.exceptions'
+import { AuthGuard } from '@common/guards/auth.guard'
+import { EnhancedZodValidationPipe } from '@common/pipes/zod-validation.pipe'
+import { LandmarkNotFoundException, OverpassApiException, WebhookControllerException, AuthUnAuthorizedException, InvalidCoordinatesException, ZodCustomError } from '@common/exceptions/api.exceptions'
 
 // Define the test interface matching our expected transformation
 interface QueryCoordinatesTest {

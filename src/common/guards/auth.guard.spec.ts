@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { AuthGuard } from './auth.guard'
 import { ConfigService } from '@nestjs/config'
 import { ExecutionContext, Logger, UnauthorizedException } from '@nestjs/common'
-import { BEARER_AUTH_TYPE } from '../../constants/auth.constants'
+import { BEARER_AUTH_TYPE } from '@shared/constants/auth.constants'
 import { Reflector } from '@nestjs/core'
 import { JwtService } from '@nestjs/jwt'
 

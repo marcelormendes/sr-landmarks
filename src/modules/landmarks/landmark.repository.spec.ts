@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { LandmarkRepository } from './landmark.repository'
-import { PrismaService } from '../services/prisma.service'
-import { DatabaseException } from '../exceptions/api.exceptions'
+import { PrismaService } from '@common/prisma/prisma.service'
+import { DatabaseException } from '@common/exceptions/api.exceptions'
 import { Logger } from '@nestjs/common'
 
 describe('LandmarkRepository', () => {

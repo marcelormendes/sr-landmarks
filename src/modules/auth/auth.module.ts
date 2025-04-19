@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common'
 import { JwtModule } from '@nestjs/jwt'
 import { ConfigModule, ConfigService } from '@nestjs/config'
-import { JWT_CONSTANTS } from '../../constants/auth.constants'
-import { AuthService } from './auth.service'
-import { AuthController } from '../../controllers/auth.controller'
+import { JWT_CONSTANTS } from '@shared/constants/auth.constants'
+import { AuthService } from '@modules/auth/auth.service'
+import { AuthController } from '@modules/auth/auth.controller'
 
 /**
  * Auth module that configures JWT token management

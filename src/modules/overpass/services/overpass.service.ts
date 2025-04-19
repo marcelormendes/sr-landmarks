@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { LandmarkDto } from '../../landmark.dto'
-import { CacheService } from '../cache.service'
-import { OverpassPipelineService } from './overpass-pipeline.service'
-import { ErrorHandler } from '../../exceptions/error-handling'
-import { OverpassApiException } from '../../exceptions/api.exceptions'
+import { LandmarkDto } from '@modules/landmarks/landmark.dto'
+import { CacheService } from '@common/cache/cache.service'
+import { OverpassPipelineService } from '@modules/overpass/services/overpass-pipeline.service'
+import { ErrorHandler } from '@common/exceptions/error-handling'
+import { OverpassApiException } from '@common/exceptions/api.exceptions'
 
 /**
  * Service for interacting with the Overpass API to find nearby landmarks.

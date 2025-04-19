@@ -1,8 +1,8 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
-import { JWT_CONSTANTS } from '../../constants/auth.constants'
-import { JwtPayload } from '../../interfaces/auth.interface'
+import { JWT_CONSTANTS } from '@shared/constants/auth.constants'
+import { JwtPayload } from '@shared/interfaces/auth.interface'
 /**
  * Service for handling authentication and JWT token operations
  */

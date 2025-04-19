@@ -14,8 +14,8 @@ import {
   AUTH_ERROR_MESSAGES,
   IS_PUBLIC_KEY,
   JWT_CONSTANTS,
-} from '../../constants/auth.constants'
-import { RequestWithUser } from '../../interfaces/auth.interface'
+} from '@shared/constants/auth.constants'
+import { RequestWithUser } from '@shared/interfaces/auth.interface'
 
 /**
  * Guard that validates API access tokens using JWT

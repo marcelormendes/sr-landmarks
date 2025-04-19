@@ -1,5 +1,5 @@
 import { HttpStatus } from '@nestjs/common'
-import { LandmarkDtoApi } from '../../dto/landmark.dto'
+import { LandmarkDtoApi } from '@modules/landmarks/landmark.dto'
 
 /**
  * API documentation for the Landmarks endpoints

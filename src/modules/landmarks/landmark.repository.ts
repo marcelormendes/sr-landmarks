@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { PrismaService } from '../services/prisma.service'
+import { PrismaService } from '@common/prisma/prisma.service'
 import { Landmark, Prisma } from '@prisma/client'
-import { DatabaseException } from '../exceptions/api.exceptions'
-import { ErrorHandler } from '../exceptions/error-handling'
+import { DatabaseException } from '@common/exceptions/api.exceptions'
+import { ErrorHandler } from '@common/exceptions/error-handling'
 
 /**
  * Repository for handling landmark data persistence operations.

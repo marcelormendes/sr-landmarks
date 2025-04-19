@@ -1,14 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq'
 import { Job } from 'bullmq'
-import { LandmarksProcessorService } from '../landmarks-processor.service'
-import { WebhookRequestRepository } from '../../../repositories/webhook-request.repository'
+import { LandmarksProcessorService } from '@modules/landmarks/services/landmarks-processor.service'
+import { WebhookRequestRepository } from '@modules/webhook/webhook-request.repository'
 import * as os from 'os'
 import { v4 as uuidv4 } from 'uuid'
-import { LANDMARKS_QUEUE } from '../../../constants/queue.constants'
-import { LandmarkProcessingJob } from '../../../interfaces/job.interface'
-import { ErrorHandler } from '../../../exceptions/error-handling'
-import { LandmarkQueueConsumerException } from '../../../exceptions/api.exceptions'
+import { LANDMARKS_QUEUE } from '@shared/constants/queue.constants'
+import { LandmarkProcessingJob } from '@shared/interfaces/job.interface'
+import { ErrorHandler } from '@common/exceptions/error-handling'
+import { LandmarkQueueConsumerException } from '@common/exceptions/api.exceptions'
 
 /**
  * Consumes jobs from the landmarks queue and processes them

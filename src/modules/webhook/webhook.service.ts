@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { roundCoordinate, encodeGeohash } from '../../utils/coordinate.util'
-import { WebhookRequestRepository } from '../../repositories/webhook-request.repository'
-import { LandmarksQueueService } from '../landmarks/queue/landmarks-queue.service'
+import { roundCoordinate, encodeGeohash } from '@common/utils/coordinate.util'
+import { WebhookRequestRepository } from '@modules/webhook/webhook-request.repository'
+import { LandmarksQueueService } from '@modules/queue/landmarks-queue.service'
 import { WebhookType } from '@prisma/client'
-import { WebhookServiceException } from '../../exceptions/api.exceptions'
-import { ErrorHandler } from '../../exceptions/error-handling'
+import { WebhookServiceException } from '@common/exceptions/api.exceptions'
+import { ErrorHandler } from '@common/exceptions/error-handling'
 
 /**
  * Service for handling webhook-related operations.

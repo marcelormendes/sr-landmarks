@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WebhookController } from './webhook.controller';
-import { WebhookService } from '../services/webhook/webhook.service';
+import { WebhookService } from '@modules/webhook/webhook.service';
 import { Logger } from '@nestjs/common';
-import { RESPONSE_MESSAGES, DEFAULT_SEARCH_RADIUS, ERROR_MESSAGES } from '../constants';
-import { AuthGuard } from './guard/auth.guard';
-import { LandmarksProcessorService } from '../services/landmarks/landmarks-processor.service';
+import { RESPONSE_MESSAGES, DEFAULT_SEARCH_RADIUS, ERROR_MESSAGES } from '@shared/constants';
+import { AuthGuard } from '@common/guards/auth.guard';
+import { LandmarksProcessorService } from '@modules/landmarks/services/landmarks-processor.service';
 import { WebhookType } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 
 // Mock error handling
-jest.mock('../exceptions/error-handling', () => ({
+jest.mock('@common/exceptions/error-handling', () => ({
   ErrorHandler: {
     handle: jest.fn().mockImplementation((error) => {
       throw error;

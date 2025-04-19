@@ -4,7 +4,7 @@ import {
   LandmarkLocationSchemaDto,
   LandmarkSchemaDto,
   moreInfoSchemaDto,
-} from '../schemas/landmarks.schema'
+} from '@modules/landmarks/landmarks.schema'
 
 // Create DTOs from the schemas
 export class LandmarkLocationDtoApi extends createZodDto(

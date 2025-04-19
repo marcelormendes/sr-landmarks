@@ -1,6 +1,6 @@
 import { Controller, Get, Logger } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'
-import { Public } from '../../decorators/public.decorator'
+import { Public } from '@shared/decorators/public.decorator'
 import {
   HealthCheckService,
   HealthCheck,
@@ -10,7 +10,7 @@ import {
 } from '@nestjs/terminus'
 import { RedisHealthIndicator } from './redis.health'
 import { QueueHealthIndicator } from './queue.health'
-import { PrismaService } from '../../services/prisma.service'
+import { PrismaService } from '@common/prisma/prisma.service'
 
 /**
  * Controller providing health check endpoints for monitoring

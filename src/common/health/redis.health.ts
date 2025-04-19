@@ -3,8 +3,8 @@ import { HealthIndicatorResult } from '@nestjs/terminus'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject } from '@nestjs/common'
 import { Redis } from 'ioredis'
-import { REDIS_CLIENT } from '../../constants/tokens'
-import { CacheManagerWithStore } from '../../interfaces/redis.interface'
+import { REDIS_CLIENT } from '@shared/constants/tokens'
+import { CacheManagerWithStore } from '@shared/interfaces/redis.interface'
 /**
  * Health indicator for Redis connection.
  * Tests Redis connectivity by performing simple cache operations.

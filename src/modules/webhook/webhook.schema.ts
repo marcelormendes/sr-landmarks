@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { UUID_REGEX } from '../constants'
+import { UUID_REGEX } from '@shared/constants'
 
 export const UuidSchema = z.string().refine(
   (val) => {

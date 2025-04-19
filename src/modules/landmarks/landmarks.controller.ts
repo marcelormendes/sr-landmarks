@@ -1,12 +1,12 @@
 import { Controller, Get, Query, Logger, HttpCode } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger'
-import { LandmarksService } from '../services/landmarks/landmarks.service'
-import { LandmarkDto, LandmarkDtoApi } from '../dto/landmark.dto'
-import { EnhancedZodValidationPipe } from '../schemas/pipes/zod-validation.pipe'
-import { LandmarksApiDocs } from './docs/api-docs'
-import { HTTP_STATUS } from '../constants'
-import { Public } from '../decorators/public.decorator'
-import { LandmarksSchema, LandmarkLocation } from '../schemas/landmarks.schema'
+import { LandmarksService } from '@modules/landmarks/services/landmarks.service'
+import { LandmarkDto, LandmarkDtoApi } from '@modules/landmarks/landmark.dto'
+import { EnhancedZodValidationPipe } from '@common/pipes/zod-validation.pipe'
+import { LandmarksApiDocs } from '@common/docs/api-docs'
+import { HTTP_STATUS } from '@shared/constants'
+import { Public } from '@shared/decorators/public.decorator'
+import { LandmarksSchema, LandmarkLocation } from '@modules/landmarks/landmarks.schema'
 
 /**
  * Controller for handling landmark-related API endpoints

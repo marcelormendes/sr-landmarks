@@ -3,14 +3,13 @@ import { LandmarksService } from './services/landmarks.service'
 import { LandmarksSearchService } from './services/landmarks-search.service'
 import { LandmarksProcessorService } from './services/landmarks-processor.service'
 import { LandmarksTransformerService } from './services/landmarks-transformer.service'
-import { OverpassModule } from './overpass/overpass/overpass.module'
-import { CacheServiceModule } from '../cache.module'
-import { AuthModule } from '../auth/auth.module'
-import { RepositoryModule } from '../../repositories/repository.module'
-import { LandmarksController } from '../../controllers/landmarks.controller'
+import { OverpassModule } from '@modules/overpass/overpass.module'
+import { CacheServiceModule } from '@common/cache/cache.module'
+import { AuthModule } from '@modules/auth/auth.module'
+import { LandmarksController } from '@modules/landmarks/landmarks.controller'
 import { ConfigModule } from '@nestjs/config'
-import { AuthGuard } from '../../controllers/guard/auth.guard'
-
+import { AuthGuard } from '@common/guards/auth.guard'
+import { LandmarkRepository } from '@modules/landmarks/landmark.repository'
 /**
  * Module managing landmark-related functionality
  * Coordinates landmark retrieval, search, and transformation logic
@@ -18,7 +17,6 @@ import { AuthGuard } from '../../controllers/guard/auth.guard'
 @Module({
   controllers: [LandmarksController],
   imports: [
-    RepositoryModule,
     OverpassModule,
     CacheServiceModule,
     ConfigModule, // Required for AuthGuard
@@ -34,12 +32,14 @@ import { AuthGuard } from '../../controllers/guard/auth.guard'
     LandmarksSearchService,
     LandmarksProcessorService,
     LandmarksTransformerService,
+    LandmarkRepository,
   ],
   exports: [
     LandmarksService,
     LandmarksSearchService,
     LandmarksProcessorService,
     LandmarksTransformerService,
+    LandmarkRepository,
   ],
 })
 export class LandmarksModule {}

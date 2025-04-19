@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { AuthController } from './auth.controller'
-import { AuthService } from '../services/auth/auth.service'
-import { AuthUnAuthorizedException } from '../exceptions/api.exceptions'
+import { AuthController } from '@modules/auth/auth.controller'
+import { AuthService } from '@modules/auth/auth.service'
+import { AuthUnAuthorizedException } from '@common/exceptions/api.exceptions'
 import { HttpStatus } from '@nestjs/common'
 
 describe('AuthController', () => {
