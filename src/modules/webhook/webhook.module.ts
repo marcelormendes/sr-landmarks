@@ -6,6 +6,7 @@ import { RepositoryModule } from '../../repositories/repository.module'
 import { LandmarksModule } from '../landmarks/landmarks.module'
 import { LandmarksQueueModule } from '../landmarks/queue/landmarks-queue.module'
 import { AuthModule } from '../auth/auth.module'
+import { WebhookRequestRepository } from './webhook-request.repository'
 
 /**
  * Module for webhook functionality.
@@ -27,6 +28,6 @@ import { AuthModule } from '../auth/auth.module'
   ],
   controllers: [WebhookController],
   providers: [WebhookService, Logger],
-  exports: [WebhookService],
+  exports: [WebhookService, WebhookRequestRepository],
 })
 export class WebhookModule {}

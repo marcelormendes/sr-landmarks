@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { OverpassService } from '../overpass/overpass.service'
+import { OverpassService } from './overpass/overpass/overpass.service'
 import { CacheService } from '../cache.service'
 import { LandmarksTransformerService } from './landmarks-transformer.service'
 import { LandmarkDto } from '../../dto/landmark.dto'

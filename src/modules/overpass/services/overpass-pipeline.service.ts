@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { LandmarkDto } from '../../dto/landmark.dto'
+import { LandmarkDto } from '../../landmark.dto'
 import { OverpassApiException } from '../../exceptions/api.exceptions'
 import { ErrorHandler } from '../../exceptions/error-handling'
 import { OverpassApiClient } from './overpass-api.client'

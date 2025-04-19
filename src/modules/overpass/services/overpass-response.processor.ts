@@ -9,7 +9,7 @@ import {
   OVERPASS_TAGS,
   OVERPASS_ADDRESS_TAGS,
 } from '../../constants/overpass.constants'
-import { LandmarkDto, MoreInfoDto } from '../../dto/landmark.dto'
+import { LandmarkDto, MoreInfoDto } from '../../landmark.dto'
 
 /**
  * Processor for handling Overpass API responses.

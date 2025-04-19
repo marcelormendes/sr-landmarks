@@ -8,7 +8,7 @@ import { LandmarksProcessorService } from '../landmarks-processor.service'
 import { LANDMARKS_QUEUE } from '../../../constants/queue.constants'
 import { RepositoryModule } from '../../../repositories/repository.module'
 import { WebhookRequestRepository } from '../../../repositories/webhook-request.repository'
-import { LandmarksModule } from '../landmarks.module'
+import { LandmarksModule } from '../../landmarks.module'
 
 @Module({
   imports: [
