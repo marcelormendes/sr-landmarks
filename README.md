@@ -425,13 +425,6 @@ When tests fail, check the following common issues:
 
 The application follows a modular architecture based on NestJS principles:
 
-- **Controllers**: Handle HTTP requests and responses
-- **Services**: Contain business logic and application workflows
-- **Repositories**: Handle data access and persistence
-- **DTOs**: Define data transfer objects for API input/output
-- **Modules**: Group related functionality
-- **Pipes**: Handle request validation and transformation
-
 ### Key Components
 
 - **Landmarks Service**: Main business logic for finding landmarks
