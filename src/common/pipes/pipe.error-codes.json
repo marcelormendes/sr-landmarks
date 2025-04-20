@@ -1,0 +1,5 @@
+{
+  "SP001": "Invalid coordinates",
+  "SP002": "Zod Schema validation failed",
+  "SP003": "No data provided or empty object"
+}

@@ -5,7 +5,7 @@ import { ConfigModule } from '@nestjs/config'
 import { LandmarksModule } from '@modules/landmarks/landmarks.module'
 import { LandmarksQueueModule } from '@modules/queue/queue.module'
 import { AuthModule } from '@modules/auth/auth.module'
-import { WebhookRequestRepository } from '@modules/webhook/webhook-request.repository'
+import { WebhookRepositoryModule } from './webhook-request.repository.module'
 
 /**
  * Module for webhook functionality.
@@ -23,9 +23,10 @@ import { WebhookRequestRepository } from '@modules/webhook/webhook-request.repos
     LandmarksModule,
     LandmarksQueueModule,
     AuthModule, // Required for JwtService used by AuthGuard
+    WebhookRepositoryModule,
   ],
   controllers: [WebhookController],
-  providers: [WebhookService, Logger, WebhookRequestRepository],
-  exports: [WebhookService, WebhookRequestRepository],
+  providers: [WebhookService, Logger],
+  exports: [WebhookService],
 })
 export class WebhookModule {}

@@ -9,7 +9,7 @@ import { AuthModule } from '@modules/auth/auth.module'
 import { LandmarksController } from '@modules/landmarks/landmarks.controller'
 import { ConfigModule } from '@nestjs/config'
 import { AuthGuard } from '@common/guards/auth.guard'
-import { LandmarkRepository } from '@modules/landmarks/landmark.repository'
+import { LandmarkRepositoryModule } from './landmark.repository.module'
 /**
  * Module managing landmark-related functionality
  * Coordinates landmark retrieval, search, and transformation logic
@@ -21,6 +21,7 @@ import { LandmarkRepository } from '@modules/landmarks/landmark.repository'
     CacheServiceModule,
     ConfigModule, // Required for AuthGuard
     AuthModule, // Required for JwtService used by AuthGuard
+    LandmarkRepositoryModule,
   ],
   providers: [
     Logger,
@@ -32,14 +33,12 @@ import { LandmarkRepository } from '@modules/landmarks/landmark.repository'
     LandmarksSearchService,
     LandmarksProcessorService,
     LandmarksTransformerService,
-    LandmarkRepository,
   ],
   exports: [
     LandmarksService,
     LandmarksSearchService,
     LandmarksProcessorService,
     LandmarksTransformerService,
-    LandmarkRepository,
   ],
 })
 export class LandmarksModule {}

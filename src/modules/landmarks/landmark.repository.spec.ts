@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { LandmarkRepository } from './landmark.repository'
 import { PrismaService } from '@common/prisma/prisma.service'
-import { DatabaseException } from '@common/exceptions/api.exceptions'
 import { Logger } from '@nestjs/common'
 
 describe('LandmarkRepository', () => {
@@ -20,7 +19,7 @@ describe('LandmarkRepository', () => {
     openingHours: null,
     accessibility: null,
     tourism: null,
-    wiki: null
+    wiki: null,
   }
 
   const mockLandmarks = [mockLandmark]
@@ -63,7 +62,6 @@ describe('LandmarkRepository', () => {
     expect(repository).toBeDefined()
   })
 
-
   describe('createMany', () => {
     it('should create many landmarks', async () => {
       const landmarksData = [
@@ -78,7 +76,7 @@ describe('LandmarkRepository', () => {
           openingHours: null,
           accessibility: null,
           tourism: null,
-          wiki: null
+          wiki: null,
         },
       ]
 
@@ -94,11 +92,10 @@ describe('LandmarkRepository', () => {
     })
   })
 
-
   describe('findByGeohash', () => {
     it('should find landmarks by geohash', async () => {
       const geohash = 'dr4ur8r'
-      
+
       jest
         .spyOn(prismaService.landmark, 'findMany')
         .mockResolvedValue(mockLandmarks)
@@ -110,13 +107,15 @@ describe('LandmarkRepository', () => {
       })
       expect(result).toEqual(mockLandmarks)
     })
-    
+
     it('should handle database errors gracefully', async () => {
       jest
         .spyOn(prismaService.landmark, 'findMany')
         .mockRejectedValue(new Error('DB error'))
 
-      await expect(repository.findByGeohash('dr4ur8r')).rejects.toThrow(DatabaseException)
+      await expect(repository.findByGeohash('dr4ur8r')).rejects.toThrow(
+        'DB error',
+      )
     })
   })
 })

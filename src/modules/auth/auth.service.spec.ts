@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
-import { UnauthorizedException } from '@nestjs/common'
+import { HttpStatus, UnauthorizedException } from '@nestjs/common'
 import { AuthService } from '@modules/auth/auth.service'
+import { AuthException } from './auth.exception'
 
 describe('AuthService', () => {
   let service: AuthService
@@ -79,7 +80,7 @@ describe('AuthService', () => {
 
     it('should throw UnauthorizedException for invalid API key', async () => {
       await expect(service.generateToken('invalid-key')).rejects.toThrow(
-        UnauthorizedException,
+        new AuthException('SRA001', HttpStatus.UNAUTHORIZED),
       )
       expect(jwtService.signAsync).not.toHaveBeenCalled()
     })
@@ -133,10 +134,10 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException for invalid token', async () => {
       jwtService.verifyAsync = jest
         .fn()
-        .mockRejectedValue(new Error('Invalid token'))
+        .mockRejectedValue(new AuthException('SRA002', HttpStatus.UNAUTHORIZED))
 
       await expect(service.verifyToken('invalid-token')).rejects.toThrow(
-        UnauthorizedException,
+        new AuthException('SRA002', HttpStatus.UNAUTHORIZED),
       )
     })
   })

@@ -142,6 +142,9 @@ export class WebhookController {
         error: webhookRequest.error || undefined,
       }
     } catch (error: unknown) {
+      if (error instanceof WebhookException) {
+        throw error
+      }
       throw new WebhookException('SRW001', HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }

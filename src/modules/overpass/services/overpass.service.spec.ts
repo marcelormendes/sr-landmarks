@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { Logger } from '@nestjs/common'
+import { HttpStatus, Logger } from '@nestjs/common'
 import { OverpassService } from '@modules/overpass/services/overpass.service'
 import { CacheService } from '@common/cache/cache.service'
 import { OverpassPipelineService } from '@modules/overpass/services/overpass-pipeline.service'
 import { encodeGeohash } from '@common/utils/coordinate.util'
+import { OverpassException } from '../overpass.exception'
 
 // Create a mock logger that doesn't log during tests
 const mockLogger = {
@@ -53,7 +54,9 @@ describe('OverpassService', () => {
     }).compile()
 
     service = module.get<OverpassService>(OverpassService)
-    pipelineService = module.get<OverpassPipelineService>(OverpassPipelineService)
+    pipelineService = module.get<OverpassPipelineService>(
+      OverpassPipelineService,
+    )
     cacheHandler = module.get<CacheService>(CacheService)
   })
 
@@ -70,7 +73,12 @@ describe('OverpassService', () => {
     it('should return cached landmarks if available', async () => {
       jest.spyOn(cacheHandler, 'get').mockResolvedValue(mockLandmarks)
 
-      const result = await service.findNearbyLandmarks(lat, lng, radius, geohash)
+      const result = await service.findNearbyLandmarks(
+        lat,
+        lng,
+        radius,
+        geohash,
+      )
 
       expect(cacheHandler.get).toHaveBeenCalled()
       expect(result).toEqual(mockLandmarks)
@@ -83,7 +91,12 @@ describe('OverpassService', () => {
         .spyOn(pipelineService, 'executePipeline')
         .mockResolvedValue(mockLandmarks)
 
-      const result = await service.findNearbyLandmarks(lat, lng, radius, geohash)
+      const result = await service.findNearbyLandmarks(
+        lat,
+        lng,
+        radius,
+        geohash,
+      )
 
       expect(cacheHandler.get).toHaveBeenCalled()
       expect(pipelineService.executePipeline).toHaveBeenCalledWith(
@@ -98,15 +111,21 @@ describe('OverpassService', () => {
       jest.spyOn(cacheHandler, 'get').mockResolvedValue(undefined)
       jest
         .spyOn(pipelineService, 'executePipeline')
-        .mockRejectedValue(new Error('API error'))
+        .mockRejectedValue(
+          new OverpassException('SRO001', HttpStatus.INTERNAL_SERVER_ERROR),
+        )
 
       await expect(
         service.findNearbyLandmarks(lat, lng, radius, geohash),
-      ).rejects.toThrow('API error')
+      ).rejects.toThrow(
+        new OverpassException('SRO001', HttpStatus.INTERNAL_SERVER_ERROR),
+      )
     })
 
     it('should handle cache service errors', async () => {
-      jest.spyOn(cacheHandler, 'get').mockRejectedValue(new Error('Cache error'))
+      jest
+        .spyOn(cacheHandler, 'get')
+        .mockRejectedValue(new Error('Cache error'))
       jest
         .spyOn(pipelineService, 'executePipeline')
         .mockResolvedValue(mockLandmarks)
@@ -120,22 +139,30 @@ describe('OverpassService', () => {
       jest.spyOn(cacheHandler, 'get').mockResolvedValue(undefined)
       jest
         .spyOn(pipelineService, 'executePipeline')
-        .mockRejectedValue(new Error('Invalid coordinates'))
+        .mockRejectedValue(
+          new OverpassException('SRO001', HttpStatus.INTERNAL_SERVER_ERROR),
+        )
 
       await expect(
         service.findNearbyLandmarks(91, lng, radius, geohash),
-      ).rejects.toThrow('Invalid coordinates')
+      ).rejects.toThrow(
+        new OverpassException('SRO001', HttpStatus.INTERNAL_SERVER_ERROR),
+      )
     })
 
     it('should handle pipeline service timeout', async () => {
       jest.spyOn(cacheHandler, 'get').mockResolvedValue(undefined)
       jest
         .spyOn(pipelineService, 'executePipeline')
-        .mockRejectedValue(new Error('Pipeline timeout'))
+        .mockRejectedValue(
+          new OverpassException('SRO001', HttpStatus.INTERNAL_SERVER_ERROR),
+        )
 
       await expect(
         service.findNearbyLandmarks(lat, lng, radius, geohash),
-      ).rejects.toThrow('Pipeline timeout')
+      ).rejects.toThrow(
+        new OverpassException('SRO001', HttpStatus.INTERNAL_SERVER_ERROR),
+      )
     })
   })
 })

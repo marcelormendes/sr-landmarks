@@ -3,16 +3,19 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { CacheModule } from '@nestjs/cache-manager'
 import { BullModule } from '@nestjs/bullmq'
 import { APP_GUARD } from '@nestjs/core'
-import configuration from './common/config/configuration'
-import { AuthModule } from './modules/auth/auth.module'
-import { HealthModule } from './common/health/health.module'
-import { ZodModule } from './common/pipes/zod.module'
-import { AuthGuard } from './common/guards/auth.guard'
-import { createRedisCacheConfig } from './common/config/redis.config'
-import { LandmarksModule } from './modules/landmarks/landmarks.module'
-import { PrismaModule } from './common/prisma/prisma.module'
-import { WebhookModule } from './modules/webhook/webhook.module'
-import { CacheServiceModule } from './common/cache/cache.module'
+import configuration from '@common/config/configuration'
+import { AuthModule } from '@modules/auth/auth.module'
+import { HealthModule } from '@common/health/health.module'
+import { ZodModule } from '@common/pipes/zod.module'
+import { AuthGuard } from '@common/guards/auth.guard'
+import { createRedisCacheConfig } from '@common/config/redis.config'
+import { LandmarksModule } from '@modules/landmarks/landmarks.module'
+import { PrismaModule } from '@common/prisma/prisma.module'
+import { WebhookModule } from '@modules/webhook/webhook.module'
+import { CacheServiceModule } from '@common/cache/cache.module'
+import { OverpassModule } from '@modules/overpass/overpass.module'
+import { LandmarkRepositoryModule } from '@modules/landmarks/landmark.repository.module'
+import { WebhookRepositoryModule } from '@modules/webhook/webhook-request.repository.module'
 
 @Module({
   imports: [
@@ -20,8 +23,11 @@ import { CacheServiceModule } from './common/cache/cache.module'
     CacheServiceModule,
     LandmarksModule,
     WebhookModule,
+    LandmarkRepositoryModule,
+    WebhookRepositoryModule,
     PrismaModule,
     HealthModule,
+    OverpassModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],

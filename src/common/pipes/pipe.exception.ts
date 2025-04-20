@@ -1,14 +1,14 @@
 import { HttpStatus } from '@nestjs/common'
 import { CustomException } from '@common/exceptions/custom.exceptions'
-import errorCodes from './webhook.error-codes.json'
+import errorCodes from './pipe.error-codes.json'
 
 /**
- * Thrown when a webhook operation fails.
+ * Thrown when an auth operation fails.
  */
-export class WebhookException extends CustomException {
+export class PipeException extends CustomException {
   constructor(
     errorCode: string,
-    status: number = HttpStatus.NOT_FOUND,
+    status: number = HttpStatus.UNAUTHORIZED,
     details?: unknown,
   ) {
     const message = errorCodes[errorCode]

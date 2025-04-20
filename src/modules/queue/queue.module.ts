@@ -2,13 +2,14 @@ import { Module } from '@nestjs/common'
 import { BullModule } from '@nestjs/bullmq'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { LandmarksQueueService } from './queue.service'
-import { LandmarksQueueConsumer } from './landmarks-queue.consumer'
+import { LandmarksQueueConsumer } from './queue.consumer'
 import { LandmarksQueueEventsListener } from './queue-events.listener'
 import { LandmarksProcessorService } from '@modules/landmarks/services/landmarks-processor.service'
 import { LANDMARKS_QUEUE } from '@shared/constants/queue.constants'
 import { WebhookRequestRepository } from '@modules/webhook/webhook-request.repository'
 import { LandmarksModule } from '@modules/landmarks/landmarks.module'
-import { WebhookModule } from '@modules/webhook/webhook.module'
+import { WebhookRepositoryModule } from '@modules/webhook/webhook-request.repository.module'
+import { OverpassModule } from '@modules/overpass/overpass.module'
 
 @Module({
   imports: [
@@ -24,10 +25,10 @@ import { WebhookModule } from '@modules/webhook/webhook.module'
         removeOnComplete: true,
       },
     }),
+    WebhookRepositoryModule,
     LandmarksModule,
     ConfigModule,
-    // Import repository module to provide WebhookRequestRepository
-    WebhookModule,
+    OverpassModule,
   ],
   providers: [
     LandmarksQueueService,

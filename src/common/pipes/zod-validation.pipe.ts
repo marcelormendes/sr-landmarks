@@ -6,11 +6,7 @@ import {
   Logger,
 } from '@nestjs/common'
 import { ZodSchema } from 'zod'
-import {
-  InvalidCoordinatesException,
-  ZodCustomError,
-} from '@common/exceptions/api.exceptions'
-import { ErrorHandler } from '@common/exceptions/error-handling'
+import { PipeException } from './pipe.exception'
 
 @Injectable()
 export class EnhancedZodValidationPipe implements PipeTransform {
@@ -26,8 +22,7 @@ export class EnhancedZodValidationPipe implements PipeTransform {
         !value ||
         (typeof value === 'object' && Object.keys(value).length === 0)
       ) {
-        this.logger.error('No data provided or empty object')
-        throw new ZodCustomError('No data provided', HttpStatus.BAD_REQUEST)
+        throw new PipeException('SP003', HttpStatus.BAD_REQUEST)
       }
 
       // If it's a primitive type (string, number, etc), use it directly
@@ -50,8 +45,7 @@ export class EnhancedZodValidationPipe implements PipeTransform {
         !value ||
         (typeof value === 'object' && Object.keys(value).length === 0)
       ) {
-        this.logger.error('No data provided or empty object')
-        throw new ZodCustomError('No data provided', HttpStatus.BAD_REQUEST)
+        throw new PipeException('SP003', HttpStatus.BAD_REQUEST, error)
       }
 
       if (
@@ -59,16 +53,10 @@ export class EnhancedZodValidationPipe implements PipeTransform {
         _metadata.data?.includes('lat') ||
         _metadata.data?.includes('lng')
       ) {
-        throw new InvalidCoordinatesException(
-          'Invalid coordinates or parameters',
-          HttpStatus.BAD_REQUEST,
-        )
+        throw new PipeException('SP001', HttpStatus.BAD_REQUEST, error)
       }
 
-      ErrorHandler.handle(error, ZodCustomError, {
-        context: 'Zod validation pipe',
-        logger: this.logger,
-      })
+      throw new PipeException('SP002', HttpStatus.BAD_REQUEST, error)
     }
   }
 }

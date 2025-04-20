@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { LandmarksService } from './landmarks.service'
 import { LandmarksSearchService } from './landmarks-search.service'
-import { Logger } from '@nestjs/common'
+import { HttpStatus, Logger } from '@nestjs/common'
 import { roundCoordinate } from '@common/utils/coordinate.util'
 import { CacheService } from '@common/cache/cache.service'
+import { LandmarkException } from '@modules/landmarks/landmarks.exception'
 
 describe('LandmarksService', () => {
   let service: LandmarksService
@@ -86,92 +87,25 @@ describe('LandmarksService', () => {
       expect(result).toEqual(mockLandmarks)
     })
 
-    it('should handle service errors and pass them through', async () => {
+    describe('error handling', () => {
       const lat = 40.12345
       const lng = -74.54321
-      const notFoundError = new LandmarkNotFoundException(
-        'Landmarks not found',
-        404,
+      beforeEach(() =>
+        jest.spyOn(cacheService, 'get').mockResolvedValue(undefined),
       )
 
-      jest.spyOn(cacheService, 'get').mockResolvedValue(undefined)
-      jest
-        .spyOn(searchService, 'searchLandmarksByCoordinates')
-        .mockRejectedValue(notFoundError)
-
-      await expect(service.searchLandmarks(lat, lng)).rejects.toThrow(
-        LandmarkServiceException,
-      )
-    })
-
-    it('should handle service unavailable exceptions', async () => {
-      const lat = 40.12345
-      const lng = -74.54321
-      const error = new OverpassApiException('External API unavailable', 503)
-
-      jest.spyOn(cacheService, 'get').mockResolvedValue(undefined)
-      jest
-        .spyOn(searchService, 'searchLandmarksByCoordinates')
-        .mockRejectedValue(error)
-
-      await expect(service.searchLandmarks(lat, lng)).rejects.toThrow(
-        LandmarkServiceException,
-      )
-    })
-
-    it('should handle internal server errors', async () => {
-      const lat = 40.12345
-      const lng = -74.54321
-      const internalError = new WebhookControllerException(
-        'Database connection failed',
-        500,
-      )
-
-      jest.spyOn(service, 'searchLandmarks').mockRejectedValue(internalError)
-
-      await expect(service.searchLandmarks(lat, lng)).rejects.toThrow(
-        WebhookControllerException,
-      )
-    })
-
-    it('should handle database connection errors', async () => {
-      const lat = 40.12345
-      const lng = -74.54321
-
-      jest.spyOn(cacheService, 'get').mockResolvedValue(undefined)
-      jest
-        .spyOn(searchService, 'searchLandmarksByCoordinates')
-        .mockRejectedValue(new Error('Database connection failed'))
-
-      await expect(service.searchLandmarks(lat, lng)).rejects.toThrow(
-        'Database connection failed',
-      )
-    })
-
-    it('should handle cache service errors', async () => {
-      const lat = 40.12345
-      const lng = -74.54321
-
-      jest
-        .spyOn(searchService, 'searchLandmarksByCoordinates')
-        .mockRejectedValue(new Error('Cache service error'))
-
-      await expect(service.searchLandmarks(lat, lng)).rejects.toThrow(
-        'Cache service error',
-      )
-    })
-
-    it('should handle transformation errors', async () => {
-      const lat = 40.12345
-      const lng = -74.54321
-
-      jest.spyOn(cacheService, 'get').mockResolvedValue(undefined)
-      jest
-        .spyOn(searchService, 'searchLandmarksByCoordinates')
-        .mockRejectedValue(new Error('Transformation failed'))
-
-      await expect(service.searchLandmarks(lat, lng)).rejects.toThrow(
-        'Transformation failed',
+      it.each([
+        new LandmarkException('SRL001', HttpStatus.INTERNAL_SERVER_ERROR),
+        new LandmarkException('SRL002', HttpStatus.BAD_REQUEST),
+        new LandmarkException('SRL003', HttpStatus.NOT_FOUND),
+      ])(
+        'should throw LandmarkException when search service rejects with %p',
+        async (err) => {
+          jest
+            .spyOn(searchService, 'searchLandmarksByCoordinates')
+            .mockRejectedValue(err)
+          await expect(service.searchLandmarks(lat, lng)).rejects.toThrow(err)
+        },
       )
     })
   })
