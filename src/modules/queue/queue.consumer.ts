@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { HttpStatus, Injectable, Logger } from '@nestjs/common'
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq'
 import { Job } from 'bullmq'
 import { LandmarksProcessorService } from '@modules/landmarks/services/landmarks-processor.service'
@@ -7,8 +7,7 @@ import * as os from 'os'
 import { v4 as uuidv4 } from 'uuid'
 import { LANDMARKS_QUEUE } from '@shared/constants/queue.constants'
 import { LandmarkProcessingJob } from '@shared/interfaces/job.interface'
-import { ErrorHandler } from '@common/exceptions/error-handling'
-import { LandmarkQueueConsumerException } from '@common/exceptions/api.exceptions'
+import { QueueException } from './queue.exception'
 
 /**
  * Consumes jobs from the landmarks queue and processes them
@@ -44,13 +43,13 @@ export class LandmarksQueueConsumer extends WorkerHost {
   ): Promise<any> {
     const { lat, lng, radius, requestId, producerId, timestamp } = job.data
 
-    this.logger.log(
-      `Worker ${this.workerId} processing job ${job.id}: lat=${lat}, lng=${lng}, radius=${radius}, requestId=${requestId}` +
-        (producerId ? `, from producer: ${producerId}` : '') +
-        (timestamp ? `, submitted at: ${timestamp}` : ''),
-    )
-
     try {
+      this.logger.log(
+        `Worker ${this.workerId} processing job ${job.id}: lat=${lat}, lng=${lng}, radius=${radius}, requestId=${requestId}` +
+          (producerId ? `, from producer: ${producerId}` : '') +
+          (timestamp ? `, submitted at: ${timestamp}` : ''),
+      )
+
       await job.updateProgress(10)
 
       // Process landmarks
@@ -80,11 +79,12 @@ export class LandmarksQueueConsumer extends WorkerHost {
           processingTime: `${Date.now() - (timestamp ? new Date(timestamp).getTime() : Date.now())}ms`,
         },
       }
-    } catch (error: unknown) {
-      ErrorHandler.handle(error, LandmarkQueueConsumerException, {
-        context: 'Landmarks queue consumer',
-        logger: this.logger,
-      })
+    } catch (error) {
+      throw new QueueException(
+        'SQR001',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error,
+      )
     }
   }
 

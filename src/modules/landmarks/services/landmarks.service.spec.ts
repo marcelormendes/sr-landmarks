@@ -2,14 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { LandmarksService } from './landmarks.service'
 import { LandmarksSearchService } from './landmarks-search.service'
 import { Logger } from '@nestjs/common'
-import { roundCoordinate } from '../../utils/coordinate.util'
-import { CacheService } from '../cache.service'
-import {
-  LandmarkServiceException,
-  LandmarkNotFoundException,
-  OverpassApiException,
-  WebhookControllerException,
-} from '../../exceptions/api.exceptions'
+import { roundCoordinate } from '@common/utils/coordinate.util'
+import { CacheService } from '@common/cache/cache.service'
 
 describe('LandmarksService', () => {
   let service: LandmarksService

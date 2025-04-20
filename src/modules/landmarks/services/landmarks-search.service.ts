@@ -4,7 +4,7 @@ import { LandmarksTransformerService } from '@modules/landmarks/services/landmar
 import { CacheService } from '@common/cache/cache.service'
 import { LandmarkRepository } from '@modules/landmarks/landmark.repository'
 import { encodeGeohash } from '@common/utils/coordinate.util'
-import { LandmarkNotFoundException } from '@common/exceptions/api.exceptions'
+import { LandmarkException } from '../landmarks.exception'
 /**
  * Service responsible for searching landmarks based on coordinates.
  * Handles the retrieval, transformation, and caching of landmark data.
@@ -54,10 +54,7 @@ export class LandmarksSearchService {
     const dbLandmarks = await this.landmarkRepository.findByGeohash(cacheKey)
 
     if (!dbLandmarks.length) {
-      throw new LandmarkNotFoundException(
-        `No landmarks found for coordinates (${cacheKey})`,
-        HttpStatus.NOT_FOUND,
-      )
+      throw new LandmarkException('SRL003', HttpStatus.NOT_FOUND)
     }
 
     const landmarkDtos = this.transformerService.transformLandmarks(dbLandmarks)

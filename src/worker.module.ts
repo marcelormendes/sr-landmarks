@@ -9,7 +9,7 @@ import { HealthModule } from '@common/health/health.module'
 import { PrismaModule } from '@common/prisma/prisma.module'
 import { OverpassModule } from '@modules/overpass/overpass.module'
 import { LandmarksModule } from '@modules/landmarks/landmarks.module'
-import { LandmarksQueueModule } from '@modules/queue/landmarks-queue.module'
+import { LandmarksQueueModule } from '@modules/queue/queue.module'
 import { WebhookModule } from '@modules/webhook/webhook.module'
 
 /**

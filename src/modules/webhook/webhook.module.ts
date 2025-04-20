@@ -3,9 +3,9 @@ import { Module, Logger } from '@nestjs/common'
 import { WebhookService } from '@modules/webhook/webhook.service'
 import { ConfigModule } from '@nestjs/config'
 import { LandmarksModule } from '@modules/landmarks/landmarks.module'
-import { LandmarksQueueModule } from '@modules/queue/landmarks-queue.module'
-import { AuthModule } from '../auth/auth.module'
-import { WebhookRequestRepository } from './webhook-request.repository'
+import { LandmarksQueueModule } from '@modules/queue/queue.module'
+import { AuthModule } from '@modules/auth/auth.module'
+import { WebhookRequestRepository } from '@modules/webhook/webhook-request.repository'
 
 /**
  * Module for webhook functionality.

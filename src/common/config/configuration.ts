@@ -1,8 +1,7 @@
-import { envSchema } from '../schemas/configuration.schema'
-import { JWT_CONSTANTS } from '../constants/auth.constants'
-import { Logger } from '@nestjs/common'
-import { ErrorHandler } from 'src/exceptions/error-handling'
-import { ConfigurationException } from 'src/exceptions/api.exceptions'
+import { envSchema } from './configuration.schema'
+import { JWT_CONSTANTS } from '@shared/constants/auth.constants'
+import { CustomException } from '@common/exceptions/custom.exceptions'
+import { Logger, HttpStatus } from '@nestjs/common'
 
 export default () => {
   // Check if we're in test mode
@@ -82,10 +81,11 @@ export default () => {
       },
     }
   } catch (error: unknown) {
-    const logger = new Logger('Configuration')
-    ErrorHandler.handle(error, ConfigurationException, {
-      context: 'Configuration',
-      logger: logger,
-    })
+    throw new CustomException(
+      'Failed to load configuration',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      error,
+      'SRC001',
+    )
   }
 }

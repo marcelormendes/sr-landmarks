@@ -1,6 +1,12 @@
-import { ExceptionFilter, Catch, ArgumentsHost, Logger } from '@nestjs/common'
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  Logger,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common'
 import { Request, Response } from 'express'
-import { CustomException } from './custom.exceptions'
 
 /**
  * Global exception filter to standardize error responses
@@ -17,28 +23,33 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>()
     const request = ctx.getRequest<Request>()
 
-    // If it's not a CustomException, something went wrong with our error handling
-    if (!(exception instanceof CustomException)) {
-      this.logger.error(
-        `Unexpected error type received: ${exception instanceof Error ? exception.constructor.name : typeof exception}`,
-        exception instanceof Error ? exception.stack : undefined,
-      )
+    // Handle known HttpExceptions (including CustomException)
+    if (exception instanceof HttpException) {
+      const status = exception.getStatus()
+      const resBody = exception.getResponse()
+      const body =
+        typeof resBody === 'string'
+          ? { message: resBody }
+          : (resBody as Record<string, unknown>)
 
-      return response.status(500).json({
-        statusCode: 500,
-        message: 'Internal server error',
-        timestamp: new Date().toISOString(),
+      return response.status(status).json({
+        ...body,
+        statusCode: status,
         path: request.url,
       })
     }
 
-    // Handle CustomException
-    return response.status(exception.statusCode).json({
-      statusCode: exception.statusCode,
-      message: exception.message,
+    // Fallback for non-HTTP errors
+    this.logger.error(
+      `Unexpected error type received: ${exception instanceof Error ? exception.constructor.name : typeof exception}`,
+      exception instanceof Error ? exception.stack : undefined,
+    )
+    const status = HttpStatus.INTERNAL_SERVER_ERROR
+    return response.status(status).json({
+      statusCode: status,
+      message: 'Internal server error',
       timestamp: new Date().toISOString(),
       path: request.url,
-      ...(exception.cause && { cause: exception.cause }),
     })
   }
 }

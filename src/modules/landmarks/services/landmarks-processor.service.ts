@@ -1,11 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common'
-import { OverpassService } from './overpass/overpass/overpass.service'
-import { CacheService } from '../cache.service'
+import { HttpStatus, Injectable, Logger } from '@nestjs/common'
+import { OverpassService } from '@modules/overpass/services/overpass.service'
+import { CacheService } from '@common/cache/cache.service'
 import { LandmarksTransformerService } from './landmarks-transformer.service'
-import { LandmarkDto } from '../../dto/landmark.dto'
-import { LandmarkRepository } from '../../repositories/landmark.repository'
-import { encodeGeohash } from '../../utils/coordinate.util'
-import { CACHE_TTL_3600_SECONDS } from '../../constants/validation.constants'
+import { LandmarkDto } from '../landmark.dto'
+import { LandmarkRepository } from '../landmark.repository'
+import { encodeGeohash } from '@common/utils/coordinate.util'
+import { CACHE_TTL_3600_SECONDS } from '@shared/constants/validation.constants'
+import { LandmarkException } from '../landmarks.exception'
 
 /**
  * Service responsible for processing landmark data from coordinates.
@@ -34,7 +35,7 @@ export class LandmarksProcessorService {
   ): Promise<LandmarkDto[]> {
     // Validate coordinates
     if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-      throw new Error('Invalid coordinates')
+      throw new LandmarkException('SRL002', HttpStatus.BAD_REQUEST)
     }
 
     // Create geohash for the coordinates

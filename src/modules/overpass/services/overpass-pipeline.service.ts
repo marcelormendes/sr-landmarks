@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { LandmarkDto } from '@modules/landmarks/landmark.dto'
-import { OverpassApiException } from '@common/exceptions/api.exceptions'
-import { ErrorHandler } from '@common/exceptions/error-handling'
+import { OverpassException } from '../overpass.exception'
 import { OverpassApiClient } from '@modules/overpass/services/overpass-api.client'
 import { OverpassQueryBuilder } from '@modules/overpass/services/overpass-query.builder'
 import { OverpassResponseProcessor } from '@modules/overpass/services/overpass-response.processor'
@@ -28,24 +27,16 @@ export class OverpassPipelineService {
     lng: number,
     radius: number,
   ): Promise<LandmarkDto[]> {
-    try {
-      // Build query
-      this.logger.log(`Building query for coordinates (${lat}, ${lng})`)
-      const query = this.queryBuilder.buildQuery(lat, lng, radius)
+    // Build query
+    this.logger.log(`Building query for coordinates (${lat}, ${lng})`)
+    const query = this.queryBuilder.buildQuery(lat, lng, radius)
 
-      // Make API request
-      this.logger.log('Making API request with query')
-      const response = await this.apiClient.makeRequestWithRetry(query)
+    // Make API request
+    this.logger.log('Making API request with query')
+    const response = await this.apiClient.makeRequestWithRetry(query)
 
-      // Process response
-      this.logger.log('Processing API response')
-      return this.responseProcessor.processResponse(response)
-    } catch (error) {
-      // Log the full error for debugging
-      ErrorHandler.handle(error, OverpassApiException, {
-        context: 'Overpass pipeline',
-        logger: this.logger,
-      })
-    }
+    // Process response
+    this.logger.log('Processing API response')
+    return this.responseProcessor.processResponse(response)
   }
 }

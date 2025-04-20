@@ -3,13 +3,12 @@ import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { UnauthorizedException } from '@nestjs/common'
 import { AuthService } from '@modules/auth/auth.service'
-import { JWT_CONSTANTS } from '@shared/constants/auth.constants'
 
 describe('AuthService', () => {
   let service: AuthService
   let jwtService: JwtService
   let configService: ConfigService
-  
+
   const TEST_SECRET = 'test-secret-key'
 
   beforeEach(async () => {
@@ -88,13 +87,13 @@ describe('AuthService', () => {
     it('should store only a partial API key in the token', async () => {
       const longApiKey = 'very-long-api-key-that-should-be-truncated'
       const mockToken = 'mock-jwt-token'
-      
+
       // Override config service to return our test key
       configService.get = jest.fn().mockReturnValue(longApiKey)
-      
+
       // Create a new service instance with the updated config
       service = new AuthService(jwtService, configService)
-      
+
       jwtService.signAsync = jest.fn().mockResolvedValue(mockToken)
 
       await service.generateToken(longApiKey)
@@ -103,7 +102,7 @@ describe('AuthService', () => {
       expect(jwtService.signAsync).toHaveBeenCalledWith(
         expect.objectContaining({
           sub: 'api-client',
-          apiKey: expect.stringMatching(/^.{1,8}\.\.\.$/)
+          apiKey: expect.stringMatching(/^.{1,8}\.\.\.$/),
         }),
       )
     })
@@ -111,7 +110,12 @@ describe('AuthService', () => {
 
   describe('verifyToken', () => {
     it('should return payload for valid token', async () => {
-      const mockPayload = { sub: 'api-client', apiKey: 'test...', iat: 123, exp: 456 }
+      const mockPayload = {
+        sub: 'api-client',
+        apiKey: 'test...',
+        iat: 123,
+        exp: 456,
+      }
       jwtService.verifyAsync = jest.fn().mockResolvedValue(mockPayload)
 
       const result = await service.verifyToken('valid-token')
@@ -127,7 +131,9 @@ describe('AuthService', () => {
     })
 
     it('should throw UnauthorizedException for invalid token', async () => {
-      jwtService.verifyAsync = jest.fn().mockRejectedValue(new Error('Invalid token'))
+      jwtService.verifyAsync = jest
+        .fn()
+        .mockRejectedValue(new Error('Invalid token'))
 
       await expect(service.verifyToken('invalid-token')).rejects.toThrow(
         UnauthorizedException,

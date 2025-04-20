@@ -1,8 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { PrismaService } from '@common/prisma/prisma.service'
 import { Landmark, Prisma } from '@prisma/client'
-import { DatabaseException } from '@common/exceptions/api.exceptions'
-import { ErrorHandler } from '@common/exceptions/error-handling'
 
 /**
  * Repository for handling landmark data persistence operations.
@@ -21,29 +19,15 @@ export class LandmarkRepository {
   public async createMany(
     data: Prisma.LandmarkCreateManyInput[],
   ): Promise<Prisma.BatchPayload> {
-    try {
-      return this.prisma.landmark.createMany({ data })
-    } catch (error: unknown) {
-      return ErrorHandler.handle(error, DatabaseException, {
-        context: 'Database operation createMany',
-        logger: this.logger,
-      })
-    }
+    // Perform bulk create; let database exceptions bubble up
+    return this.prisma.landmark.createMany({ data })
   }
 
   /**
    * Finds landmarks by geohash
    */
   public async findByGeohash(geohash: string): Promise<Landmark[]> {
-    try {
-      return await this.prisma.landmark.findMany({
-        where: { geohash },
-      })
-    } catch (error: unknown) {
-      ErrorHandler.handle(error, DatabaseException, {
-        context: 'Database operation findByGeohash',
-        logger: this.logger,
-      })
-    }
+    // Perform query; let exceptions bubble up
+    return this.prisma.landmark.findMany({ where: { geohash } })
   }
 }

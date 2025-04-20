@@ -13,16 +13,13 @@ import { ApiKey, authSchema } from '@modules/auth/auth.schema'
 import { TokenResponseDto } from '@modules/auth/auth.dto'
 import { EnhancedZodValidationPipe } from '@common/pipes/zod-validation.pipe'
 import { BEARER, ONE_HOUR } from '@shared/constants/auth.constants'
-import { AuthUnAuthorizedException } from '@common/exceptions/api.exceptions'
-import { ErrorHandler } from '@common/exceptions/error-handling'
+import { AuthException } from '@modules/auth/auth.exception'
 /**
  * Controller for authentication endpoints
  */
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  private readonly logger = new Logger(AuthController.name)
-
   constructor(private authService: AuthService) {}
 
   /**
@@ -47,26 +44,16 @@ export class AuthController {
     )
     body: ApiKey,
   ): Promise<TokenResponseDto> {
-    try {
-      if (!body.apiKey) {
-        throw new AuthUnAuthorizedException(
-          'API key is required',
-          HttpStatus.BAD_REQUEST,
-        )
-      }
+    if (!body.apiKey) {
+      throw new AuthException('SRA003', HttpStatus.BAD_REQUEST)
+    }
 
-      const token = await this.authService.generateToken(body.apiKey)
+    const token = await this.authService.generateToken(body.apiKey)
 
-      return {
-        access_token: token,
-        expires_in: ONE_HOUR,
-        token_type: BEARER,
-      }
-    } catch (error: unknown) {
-      ErrorHandler.handle(error, AuthUnAuthorizedException, {
-        context: 'Auth controller',
-        logger: this.logger,
-      })
+    return {
+      access_token: token,
+      expires_in: ONE_HOUR,
+      token_type: BEARER,
     }
   }
 }

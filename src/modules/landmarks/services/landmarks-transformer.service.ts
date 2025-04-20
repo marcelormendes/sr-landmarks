@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { LandmarkDto } from '../../dto/landmark.dto'
+import { LandmarkDto } from '../landmark.dto'
 import { Landmark as PrismaLandmark } from '@prisma/client'
 
 /**

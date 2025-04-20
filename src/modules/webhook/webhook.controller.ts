@@ -38,11 +38,8 @@ import {
 } from '@shared/constants'
 import { WebhookType } from '@prisma/client'
 import { ConfigService } from '@nestjs/config'
-import { ErrorHandler } from '@common/exceptions/error-handling'
-import {
-  WebhookControllerException,
-  WebhookServiceException,
-} from '@common/exceptions/api.exceptions'
+import { WebhookException } from './webhook.exception'
+
 /**
  * Controller for handling webhook endpoints.
  * Processes coordinate data and returns landmark information.
@@ -101,10 +98,7 @@ export class WebhookController {
         message: RESPONSE_MESSAGES.WEBHOOK_RECEIVED,
       }
     } catch (error) {
-      ErrorHandler.handle(error, WebhookControllerException, {
-        context: 'Webhook controller',
-        logger: this.logger,
-      })
+      throw new WebhookException('SRW001', HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }
 
@@ -132,10 +126,7 @@ export class WebhookController {
         await this.webhookService.getWebhookStatus(requestId)
 
       if (!webhookRequest) {
-        throw new WebhookServiceException(
-          ERROR_MESSAGES.WEBHOOK_REQUEST_NOT_FOUND,
-          HttpStatus.NOT_FOUND,
-        )
+        throw new WebhookException('SRW002', HttpStatus.NOT_FOUND)
       }
 
       return {
@@ -151,16 +142,7 @@ export class WebhookController {
         error: webhookRequest.error || undefined,
       }
     } catch (error: unknown) {
-      if (error instanceof WebhookServiceException) {
-        ErrorHandler.handle(error, WebhookServiceException, {
-          context: 'Webhook controller',
-          logger: this.logger,
-        })
-      }
-      ErrorHandler.handle(error, WebhookControllerException, {
-        context: 'Webhook controller',
-        logger: this.logger,
-      })
+      throw new WebhookException('SRW001', HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }
   /**
@@ -246,13 +228,10 @@ export class WebhookController {
         requestId,
         ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       )
-      this.logger.error(
-        `Error in synchronous webhook: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        requestId,
-      )
-      throw new WebhookControllerException(
-        ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      throw new WebhookException(
+        'SRW001',
         HttpStatus.INTERNAL_SERVER_ERROR,
+        error,
       )
     } finally {
       clearTimeout(timeoutId)

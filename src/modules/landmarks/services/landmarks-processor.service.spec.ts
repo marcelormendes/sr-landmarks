@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { Logger } from '@nestjs/common'
 import { LandmarksProcessorService } from './landmarks-processor.service'
-import { LandmarkRepository } from '../../repositories/landmark.repository'
-import { OverpassService } from './overpass/overpass/overpass.service'
-import { CacheService } from '../cache.service'
-import { encodeGeohash } from '../../utils/coordinate.util'
+import { LandmarkRepository } from '@modules/landmarks/landmark.repository'
+import { OverpassService } from '@modules/overpass/services/overpass.service'
+import { CacheService } from '@common/cache/cache.service'
+import { encodeGeohash } from '@common/utils/coordinate.util'
 import { LandmarksTransformerService } from './landmarks-transformer.service'
-import { TransformationError } from '../../exceptions/transformation.exceptions'
+import { TransformationError } from '@common/exceptions/transformation.exceptions'
 
 describe('LandmarksProcessorService', () => {
   let service: LandmarksProcessorService
@@ -88,13 +88,23 @@ describe('LandmarksProcessorService', () => {
 
     it('should return existing landmarks if found in database', async () => {
       // Mock database returning existing landmarks
-      jest.spyOn(landmarkRepository, 'findByGeohash').mockResolvedValue(mockDbLandmarks)
+      jest
+        .spyOn(landmarkRepository, 'findByGeohash')
+        .mockResolvedValue(mockDbLandmarks)
       jest.spyOn(cacheService, 'set').mockResolvedValue()
-      
-      const result = await service.processLandmarksByCoordinates(lat, lng, radius)
+
+      const result = await service.processLandmarksByCoordinates(
+        lat,
+        lng,
+        radius,
+      )
 
       expect(landmarkRepository.findByGeohash).toHaveBeenCalledWith(geohash)
-      expect(cacheService.set).toHaveBeenCalledWith(geohash, expect.any(Array), 3600)
+      expect(cacheService.set).toHaveBeenCalledWith(
+        geohash,
+        expect.any(Array),
+        3600,
+      )
       expect(overpassService.findNearbyLandmarks).not.toHaveBeenCalled()
       expect(result).toHaveLength(mockDbLandmarks.length)
       expect(result[0]).toHaveProperty('name', mockDbLandmarks[0].name)
@@ -104,22 +114,41 @@ describe('LandmarksProcessorService', () => {
     it('should fetch landmarks from Overpass API when none exist in database', async () => {
       // Mock empty database result
       jest.spyOn(landmarkRepository, 'findByGeohash').mockResolvedValue([])
-      jest.spyOn(overpassService, 'findNearbyLandmarks').mockResolvedValue(mockLandmarks)
-      jest.spyOn(landmarkRepository, 'createMany').mockResolvedValue({ count: mockLandmarks.length })
+      jest
+        .spyOn(overpassService, 'findNearbyLandmarks')
+        .mockResolvedValue(mockLandmarks)
+      jest
+        .spyOn(landmarkRepository, 'createMany')
+        .mockResolvedValue({ count: mockLandmarks.length })
       jest.spyOn(cacheService, 'set').mockResolvedValue()
-      
-      const result = await service.processLandmarksByCoordinates(lat, lng, radius)
+
+      const result = await service.processLandmarksByCoordinates(
+        lat,
+        lng,
+        radius,
+      )
 
       expect(landmarkRepository.findByGeohash).toHaveBeenCalledWith(geohash)
-      expect(overpassService.findNearbyLandmarks).toHaveBeenCalledWith(lat, lng, radius, geohash)
-      expect(landmarkRepository.createMany).toHaveBeenCalledWith(expect.arrayContaining([
-        expect.objectContaining({
-          name: mockLandmarks[0].name,
-          type: mockLandmarks[0].type,
-          geohash,
-        })
-      ]))
-      expect(cacheService.set).toHaveBeenCalledWith(geohash, mockLandmarks, 3600)
+      expect(overpassService.findNearbyLandmarks).toHaveBeenCalledWith(
+        lat,
+        lng,
+        radius,
+        geohash,
+      )
+      expect(landmarkRepository.createMany).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: mockLandmarks[0].name,
+            type: mockLandmarks[0].type,
+            geohash,
+          }),
+        ]),
+      )
+      expect(cacheService.set).toHaveBeenCalledWith(
+        geohash,
+        mockLandmarks,
+        3600,
+      )
       expect(result).toEqual(mockLandmarks)
     })
 
@@ -127,22 +156,32 @@ describe('LandmarksProcessorService', () => {
       // Mock empty database result and empty API result
       jest.spyOn(landmarkRepository, 'findByGeohash').mockResolvedValue([])
       jest.spyOn(overpassService, 'findNearbyLandmarks').mockResolvedValue([])
-      
-      const result = await service.processLandmarksByCoordinates(lat, lng, radius)
+
+      const result = await service.processLandmarksByCoordinates(
+        lat,
+        lng,
+        radius,
+      )
 
       expect(landmarkRepository.findByGeohash).toHaveBeenCalledWith(geohash)
-      expect(overpassService.findNearbyLandmarks).toHaveBeenCalledWith(lat, lng, radius, geohash)
+      expect(overpassService.findNearbyLandmarks).toHaveBeenCalledWith(
+        lat,
+        lng,
+        radius,
+        geohash,
+      )
       expect(landmarkRepository.createMany).not.toHaveBeenCalled()
       expect(cacheService.set).not.toHaveBeenCalled()
       expect(result).toEqual([])
     })
 
     it('should handle database connection errors', async () => {
-      jest.spyOn(landmarkRepository, 'findByGeohash')
+      jest
+        .spyOn(landmarkRepository, 'findByGeohash')
         .mockRejectedValue(new Error('Database connection failed'))
 
       await expect(
-        service.processLandmarksByCoordinates(lat, lng, radius)
+        service.processLandmarksByCoordinates(lat, lng, radius),
       ).rejects.toThrow('Database connection failed')
 
       expect(overpassService.findNearbyLandmarks).not.toHaveBeenCalled()
@@ -150,58 +189,69 @@ describe('LandmarksProcessorService', () => {
 
     it('should handle Overpass service errors', async () => {
       jest.spyOn(landmarkRepository, 'findByGeohash').mockResolvedValue([])
-      jest.spyOn(overpassService, 'findNearbyLandmarks')
+      jest
+        .spyOn(overpassService, 'findNearbyLandmarks')
         .mockRejectedValue(new Error('Overpass API error'))
 
       await expect(
-        service.processLandmarksByCoordinates(lat, lng, radius)
+        service.processLandmarksByCoordinates(lat, lng, radius),
       ).rejects.toThrow('Overpass API error')
     })
 
     it('should handle cache service errors', async () => {
-      jest.spyOn(landmarkRepository, 'findByGeohash').mockResolvedValue(mockDbLandmarks)
-      jest.spyOn(cacheService, 'set')
+      jest
+        .spyOn(landmarkRepository, 'findByGeohash')
+        .mockResolvedValue(mockDbLandmarks)
+      jest
+        .spyOn(cacheService, 'set')
         .mockRejectedValue(new Error('Cache service error'))
 
       await expect(
-        service.processLandmarksByCoordinates(lat, lng, radius)
+        service.processLandmarksByCoordinates(lat, lng, radius),
       ).rejects.toThrow('Cache service error')
     })
 
     it('should handle transformation errors', async () => {
-      jest.spyOn(landmarkRepository, 'findByGeohash').mockResolvedValue(mockDbLandmarks)
-      jest.spyOn(transformerService, 'transformLandmarks')
+      jest
+        .spyOn(landmarkRepository, 'findByGeohash')
+        .mockResolvedValue(mockDbLandmarks)
+      jest
+        .spyOn(transformerService, 'transformLandmarks')
         .mockImplementation(() => {
           throw new TransformationError('Transformation failed')
         })
 
       await expect(
-        service.processLandmarksByCoordinates(lat, lng, radius)
+        service.processLandmarksByCoordinates(lat, lng, radius),
       ).rejects.toThrow('Transformation failed')
     })
 
     it('should handle invalid geohash errors', async () => {
       const invalidLat = 91 // Invalid latitude
       await expect(
-        service.processLandmarksByCoordinates(invalidLat, lng, radius)
+        service.processLandmarksByCoordinates(invalidLat, lng, radius),
       ).rejects.toThrow('Invalid coordinates')
     })
   })
 
   describe('saveLandmarksWithGeohash', () => {
     it('should convert DTO landmarks to entities with geohash', async () => {
-      const geohash = 'dr4ur8r';
-      jest.spyOn(landmarkRepository, 'createMany').mockResolvedValue({ count: mockLandmarks.length });
-      
-      await service['saveLandmarksWithGeohash'](geohash, mockLandmarks);
-      
-      expect(landmarkRepository.createMany).toHaveBeenCalledWith([{
-        name: mockLandmarks[0].name,
-        type: mockLandmarks[0].type,
-        centerLat: mockLandmarks[0].center.lat,
-        centerLng: mockLandmarks[0].center.lng,
-        geohash,
-      }]);
-    });
-  });
+      const geohash = 'dr4ur8r'
+      jest
+        .spyOn(landmarkRepository, 'createMany')
+        .mockResolvedValue({ count: mockLandmarks.length })
+
+      await service['saveLandmarksWithGeohash'](geohash, mockLandmarks)
+
+      expect(landmarkRepository.createMany).toHaveBeenCalledWith([
+        {
+          name: mockLandmarks[0].name,
+          type: mockLandmarks[0].type,
+          centerLat: mockLandmarks[0].center.lat,
+          centerLng: mockLandmarks[0].center.lng,
+          geohash,
+        },
+      ])
+    })
+  })
 })

@@ -2,8 +2,8 @@ import { Injectable, Logger } from '@nestjs/common'
 import { LandmarkDto } from '@modules/landmarks/landmark.dto'
 import { CacheService } from '@common/cache/cache.service'
 import { OverpassPipelineService } from '@modules/overpass/services/overpass-pipeline.service'
-import { ErrorHandler } from '@common/exceptions/error-handling'
-import { OverpassApiException } from '@common/exceptions/api.exceptions'
+import { OverpassException } from '@modules/overpass/overpass.exception'
+import { HttpStatus } from '@nestjs/common'
 
 /**
  * Service for interacting with the Overpass API to find nearby landmarks.
@@ -54,10 +54,11 @@ export class OverpassService {
         return cachedData
       }
 
-      ErrorHandler.handle(error, OverpassApiException, {
-        context: 'Overpass service',
-        logger: this.logger,
-      })
+      throw new OverpassException(
+        'SRO001',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error,
+      )
     }
   }
 

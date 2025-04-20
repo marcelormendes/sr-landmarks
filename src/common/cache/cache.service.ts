@@ -2,7 +2,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Injectable, Inject, Logger, Optional } from '@nestjs/common'
 import { Cache } from 'cache-manager'
 import { Redis } from 'ioredis'
-import { REDIS_CLIENT } from '../constants/tokens'
+import { REDIS_CLIENT } from '@shared/constants/tokens'
 
 /**
  * Service providing type-safe wrapper around cache operations.

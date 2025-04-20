@@ -1,0 +1,5 @@
+{
+  "SRA001": "Invalid credentials",
+  "SRA002": "Token expired or invalid",
+  "SRA003": "Authentication required"
+}

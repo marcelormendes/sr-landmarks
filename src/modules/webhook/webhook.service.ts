@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { roundCoordinate, encodeGeohash } from '@common/utils/coordinate.util'
 import { WebhookRequestRepository } from '@modules/webhook/webhook-request.repository'
-import { LandmarksQueueService } from '@modules/queue/landmarks-queue.service'
+import { LandmarksQueueService } from '@modules/queue/queue.service'
 import { WebhookType } from '@prisma/client'
-import { WebhookServiceException } from '@common/exceptions/api.exceptions'
-import { ErrorHandler } from '@common/exceptions/error-handling'
+import { WebhookException } from './webhook.exception'
+import { HttpStatus } from '@nestjs/common'
 
 /**
  * Service for handling webhook-related operations.
@@ -69,17 +69,17 @@ export class WebhookService {
       this.logger.log(
         `Job added to queue with ID: ${jobId} for request: ${requestId}`,
       )
-    } catch (error) {
+    } catch (error: unknown) {
       // Update webhook request with error
       await this.webhookRequestRepository.markAsFailed(
         requestId,
         error instanceof Error ? error.message : 'Unknown error',
       )
-
-      ErrorHandler.handle(error, WebhookServiceException, {
-        context: 'Webhook service',
-        logger: this.logger,
-      })
+      throw new WebhookException(
+        'SRW003',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error instanceof Error ? error.message : error,
+      )
     }
   }
 

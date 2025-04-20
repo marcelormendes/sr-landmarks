@@ -1,9 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger, HttpStatus } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { OverpassApiException } from '@common/exceptions/api.exceptions'
 import { OverpassApiResponse } from '@shared/interfaces/overpass.api.response'
 import { OverpassResponseSchema } from '@modules/overpass/overpass.schema'
-import { ErrorHandler } from '@common/exceptions/error-handling'
+import { OverpassException } from '../overpass.exception'
 
 /**
  * Client for making HTTP requests to the Overpass API.
@@ -30,15 +29,15 @@ export class OverpassApiClient {
     retryCount = 0,
   ): Promise<OverpassApiResponse> {
     if (!this.apiUrl) {
-      throw new Error('Overpass API URL is missing')
+      throw new OverpassException('SRO002', HttpStatus.BAD_REQUEST)
     }
 
     if (!this.timeout) {
-      throw new Error('Overpass timeout is missing')
+      throw new OverpassException('SRO003', HttpStatus.BAD_REQUEST)
     }
 
     if (!this.maxRetries) {
-      throw new Error('Overpass max retries is missing')
+      throw new OverpassException('SRO004', HttpStatus.BAD_REQUEST)
     }
 
     try {
@@ -51,10 +50,7 @@ export class OverpassApiClient {
 
       if (!response.ok) {
         const errorText = await response.text()
-        throw new OverpassApiException(
-          `HTTP error! Status: ${response.status} - ${errorText}`,
-          response.status,
-        )
+        throw new OverpassException('SRO001', response.status, errorText)
       }
 
       const data = await response.json()
@@ -63,11 +59,11 @@ export class OverpassApiClient {
       if (retryCount < this.maxRetries) {
         return this.makeRequestWithRetry(query, retryCount + 1)
       }
-
-      ErrorHandler.handle(error, OverpassApiException, {
-        context: 'Overpass API request',
-        logger: new Logger(OverpassApiClient.name),
-      })
+      throw new OverpassException(
+        'SRO001',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error instanceof Error ? error.message : error,
+      )
     }
   }
 }

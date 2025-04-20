@@ -1,8 +1,9 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
 import { JWT_CONSTANTS } from '@shared/constants/auth.constants'
 import { JwtPayload } from '@shared/interfaces/auth.interface'
+import { AuthException } from '@modules/auth/auth.exception'
 /**
  * Service for handling authentication and JWT token operations
  */
@@ -36,7 +37,7 @@ export class AuthService {
   public async generateToken(apiKey: string): Promise<string> {
     if (!this.validateApiKey(apiKey)) {
       this.logger.warn(`Token generation attempt with invalid API key`)
-      throw new UnauthorizedException('Invalid API key')
+      throw new AuthException('SRA001')
     }
 
     const payload: JwtPayload = {
@@ -56,7 +57,7 @@ export class AuthService {
         secret: this.apiSecret,
       })
     } catch (_error: unknown) {
-      throw new UnauthorizedException('Invalid token')
+      throw new AuthException('SRA002')
     }
   }
 }

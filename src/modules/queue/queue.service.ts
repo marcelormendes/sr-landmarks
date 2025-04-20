@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { HttpStatus, Injectable, Logger } from '@nestjs/common'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Queue } from 'bullmq'
 import { v4 as uuidv4 } from 'uuid'
 import * as os from 'os'
+import { QueueException } from './queue.exception'
 
 /**
  * Service for adding landmark processing jobs to the queue
@@ -38,17 +39,27 @@ export class LandmarksQueueService {
       `Producer ${this.instanceId} adding job to queue: lat=${lat}, lng=${lng}, radius=${radius}, requestId=${requestId}`,
     )
 
-    const job = await this.landmarksQueue.add('process-landmarks', {
-      lat,
-      lng,
-      radius,
-      requestId,
-      producerId: this.instanceId,
-      timestamp: new Date().toISOString(),
-    })
+    try {
+      const job = await this.landmarksQueue.add('process-landmarks', {
+        lat,
+        lng,
+        radius,
+        requestId,
+        producerId: this.instanceId,
+        timestamp: new Date().toISOString(),
+      })
 
-    this.logger.log(`Producer ${this.instanceId} added job with ID: ${job.id}`)
-    return job.id as string
+      this.logger.log(
+        `Producer ${this.instanceId} added job with ID: ${job.id}`,
+      )
+      return job.id as string
+    } catch (error) {
+      throw new QueueException(
+        'SQR002',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error,
+      )
+    }
   }
 
   /**

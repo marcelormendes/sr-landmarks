@@ -6,7 +6,10 @@ import { EnhancedZodValidationPipe } from '@common/pipes/zod-validation.pipe'
 import { LandmarksApiDocs } from '@common/docs/api-docs'
 import { HTTP_STATUS } from '@shared/constants'
 import { Public } from '@shared/decorators/public.decorator'
-import { LandmarksSchema, LandmarkLocation } from '@modules/landmarks/landmarks.schema'
+import {
+  LandmarksSchema,
+  LandmarkLocation,
+} from '@modules/landmarks/landmarks.schema'
 
 /**
  * Controller for handling landmark-related API endpoints

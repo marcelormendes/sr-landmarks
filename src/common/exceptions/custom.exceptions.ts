@@ -1,28 +1,26 @@
-import { HttpStatus } from '@nestjs/common'
+import { HttpException, HttpStatus, Logger } from '@nestjs/common'
 
-type ErrorCause = {
-  type: string
+export interface ApiErrorPayload {
   message: string
+  details?: unknown
+  errorCode?: string
+  timestamp: string
 }
 
-// Base class for all custom exceptions
-export abstract class CustomException extends Error {
-  public readonly cause?: ErrorCause
-  public readonly errorCode: string
-  public readonly details?: unknown
-
+export class CustomException extends HttpException {
   constructor(
     message: string,
-    readonly statusCode: HttpStatus,
-    originalError?: CustomException,
+    status: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
+    details?: unknown,
+    errorCode?: string,
   ) {
-    super(message)
-    this.errorCode = this.constructor.name
-    if (originalError) {
-      this.cause = {
-        type: originalError.constructor.name,
-        message: originalError.message,
-      }
+    const body: ApiErrorPayload = {
+      message,
+      details,
+      errorCode,
+      timestamp: new Date().toISOString(),
     }
+    Logger.error(`${errorCode}: ${message}`, status, details)
+    super(body, status)
   }
 }

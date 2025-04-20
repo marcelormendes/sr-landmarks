@@ -1,9 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common'
-import { LandmarkDto } from '../../dto/landmark.dto'
-import { roundCoordinate } from '../../utils/coordinate.util'
+import { HttpStatus, Injectable, Logger } from '@nestjs/common'
+import { LandmarkDto } from '../landmark.dto'
+import { roundCoordinate } from '@common/utils/coordinate.util'
 import { LandmarksSearchService } from './landmarks-search.service'
-import { LandmarkServiceException } from '../../exceptions/api.exceptions'
-import { ErrorHandler } from '../../exceptions/error-handling'
+import { LandmarkException } from '../landmarks.exception'
 
 /**
  * Service for handling landmark-related operations.
@@ -33,15 +32,16 @@ export class LandmarksService {
     const roundedLng = roundCoordinate(lng)
 
     try {
-      // Try to find landmarks in database or cache
-      return await this.landmarksSearchService.searchLandmarksByCoordinates(
+      return this.landmarksSearchService.searchLandmarksByCoordinates(
         roundedLat,
         roundedLng,
       )
-    } catch (error: unknown) {
-      ErrorHandler.handle(error, LandmarkServiceException, {
-        context: 'Landmarks service',
-      })
+    } catch (error) {
+      throw new LandmarkException(
+        'SRL001',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error,
+      )
     }
   }
 }
