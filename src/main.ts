@@ -1,9 +1,10 @@
+import 'tsconfig-paths/register'
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { ZodValidationPipe } from 'nestjs-zod'
 import { ConfigService } from '@nestjs/config'
-import { GlobalExceptionFilter } from './exceptions/http-exception.filter'
+import { GlobalExceptionFilter } from '@common/exceptions/http-exception.filter'
 import { Logger, VersioningType } from '@nestjs/common'
 import { json, urlencoded } from 'express'
 import helmet from 'helmet'
@@ -11,14 +12,14 @@ import {
   LandmarkDtoApi,
   LandmarkLocationDtoApi,
   MoreInfoDtoApi,
-} from './dto/landmark.dto'
+} from './modules/landmarks/landmark.dto'
 import {
   WebhookRequestDto,
   WebhookResponseDto,
   WebhookStatusDto,
   WebhookSummaryDto,
   CoordinatesDto,
-} from './dto/webhook.dto'
+} from '@modules/webhook/webhook.dto'
 
 async function bootstrap() {
   // Create NestJS application

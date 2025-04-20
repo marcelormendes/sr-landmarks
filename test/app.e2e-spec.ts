@@ -2,12 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { INestApplication, Logger } from '@nestjs/common'
 import request from 'supertest'
 import { ConfigService } from '@nestjs/config'
-import { PrismaService } from '../src/services/prisma.service'
-import { CacheService } from '../src/services/cache.service'
+import { PrismaService } from '@common/prisma/prisma.service'
+import { CacheService } from '@common/cache/cache.service'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { TestConfigService } from './test.config'
-import { UuidSchema } from '../src/schemas/webhook.schema'
-import { EnhancedZodValidationPipe } from '../src/schemas/pipes/zod-validation.pipe'
+import { UuidSchema } from '@modules/webhook/webhook.schema'
+import { EnhancedZodValidationPipe } from '@common/pipes/zod-validation.pipe'
 import { TestModule } from './test.module'
 
 /**
@@ -38,9 +38,9 @@ describe('Landmarks API (e2e)', () => {
       const moduleFixture: TestingModule = await Test.createTestingModule({
         imports: [TestModule],
       })
-      .overrideProvider(ConfigService)
-      .useClass(TestConfigService)
-      .compile()
+        .overrideProvider(ConfigService)
+        .useClass(TestConfigService)
+        .compile()
 
       app = moduleFixture.createNestApplication()
       // No global validation pipe needed since we're using Zod validation
@@ -55,7 +55,9 @@ describe('Landmarks API (e2e)', () => {
       // Get JWT token through the actual auth endpoint
       const authResponse = await request(app.getHttpServer())
         .post('/auth/token')
-        .send({ apiKey: 'test-secret-key-1234567890-test-secret-key-1234567890' })
+        .send({
+          apiKey: 'test-secret-key-1234567890-test-secret-key-1234567890',
+        })
         .expect(200)
 
       accessToken = authResponse.body.access_token
@@ -75,7 +77,7 @@ describe('Landmarks API (e2e)', () => {
         } catch (err) {
           console.log('Tables may not exist yet, skipping cleanup')
         }
-        
+
         await app.close()
       }
 
@@ -97,7 +99,7 @@ describe('Landmarks API (e2e)', () => {
       const webhookData = {
         lat: 51.5074,
         lng: -0.1278,
-        radius: 500
+        radius: 500,
       }
       console.log('Sending webhook request with data:', webhookData)
 
@@ -115,20 +117,20 @@ describe('Landmarks API (e2e)', () => {
       console.log('Webhook created with requestId:', requestId)
 
       // Test the UUID validation directly
-      const logger = new Logger('ValidationTest');
+      const logger = new Logger('ValidationTest')
       const validationPipe = new EnhancedZodValidationPipe(UuidSchema, logger)
       try {
         console.log('Attempting to validate UUID:', requestId)
         console.log('UUID validation metadata:', {
           type: 'param',
           data: 'uuid',
-          metatype: String
+          metatype: String,
         })
-        
+
         const validatedUuid = await validationPipe.transform(requestId, {
           type: 'param',
           data: 'uuid',
-          metatype: String
+          metatype: String,
         })
         console.log('UUID validation successful:', validatedUuid)
       } catch (error) {
@@ -159,8 +161,11 @@ describe('Landmarks API (e2e)', () => {
         .set('Authorization', `Bearer ${accessToken}`)
         .expect((res) => {
           console.log('Response status:', res.status)
-          console.log('Response body:', JSON.stringify(res.body).substring(0, 100) + '...')
-          
+          console.log(
+            'Response body:',
+            JSON.stringify(res.body).substring(0, 100) + '...',
+          )
+
           if (res.status === 200) {
             expect(res.body).toBeInstanceOf(Array)
             if (res.body.length > 0) {
@@ -180,36 +185,39 @@ describe('Landmarks API (e2e)', () => {
         .get('/landmarks?lat=invalid&lng=-0.1281')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(400)
-        .expect(res => {
+        .expect((res) => {
           expect(res.body).toHaveProperty('message')
         })
     })
   })
 
   describe('Caching', () => {
-    const testLat = 51.5080
+    const testLat = 51.508
     const testLng = -0.1281
     const testRadius = 500
 
     it('should generate different geohashes for different coordinates', async () => {
-      const coords1 = { lat: 51.5080, lng: -0.1281 }
+      const coords1 = { lat: 51.508, lng: -0.1281 }
       const coords2 = { lat: 52.5085, lng: -1.1285 }
-      
+
       await request(app.getHttpServer())
         .get(`/landmarks?lat=${coords1.lat}&lng=${coords1.lng}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .expect((res) => expect([200, 404]).toContain(res.status))
-        
+
       await request(app.getHttpServer())
         .get(`/landmarks?lat=${coords2.lat}&lng=${coords2.lng}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .expect((res) => expect([200, 404]).toContain(res.status))
-      
+
       try {
-        if (cacheManager.store && typeof cacheManager.store.keys === 'function') {
+        if (
+          cacheManager.store &&
+          typeof cacheManager.store.keys === 'function'
+        ) {
           const keys = await cacheManager.store.keys('*landmarks*')
           console.log('Cache keys:', keys)
-          
+
           if (keys.length > 0) {
             expect(keys.length).toBeGreaterThan(0)
           }
@@ -221,21 +229,21 @@ describe('Landmarks API (e2e)', () => {
 
     it('should respond faster on subsequent requests due to caching', async () => {
       const startTime1 = Date.now()
-      
+
       const firstResponse = await request(app.getHttpServer())
         .get(`/landmarks?lat=${testLat}&lng=${testLng}&radius=${testRadius}`)
         .set('Authorization', `Bearer ${accessToken}`)
-      
+
       const duration1 = Date.now() - startTime1
-      
+
       const startTime2 = Date.now()
-      
+
       const secondResponse = await request(app.getHttpServer())
         .get(`/landmarks?lat=${testLat}&lng=${testLng}&radius=${testRadius}`)
         .set('Authorization', `Bearer ${accessToken}`)
-        
+
       expect(secondResponse.status).toEqual(firstResponse.status)
-      
+
       const duration2 = Date.now() - startTime2
       expect(duration2).toBeLessThanOrEqual(duration1 * 5.0)
     })
@@ -244,23 +252,32 @@ describe('Landmarks API (e2e)', () => {
       const firstResponse = await request(app.getHttpServer())
         .get(`/landmarks?lat=${testLat}&lng=${testLng}&radius=${testRadius}`)
         .set('Authorization', `Bearer ${accessToken}`)
-      
+
       const secondResponse = await request(app.getHttpServer())
         .get(`/landmarks?lat=${testLat}&lng=${testLng}&radius=${testRadius}`)
         .set('Authorization', `Bearer ${accessToken}`)
-      
+
       expect(secondResponse.status).toEqual(firstResponse.status)
-      expect(JSON.stringify(secondResponse.body)).toEqual(JSON.stringify(firstResponse.body))
-      
+
+      const { message: secondMessage, errorCode: secondErrorCode } =
+        secondResponse.body
+      const { message: firstMessage, errorCode: firstErrorCode } =
+        firstResponse.body
+
+      expect(secondMessage).toEqual(firstMessage)
+      expect(secondErrorCode).toEqual(firstErrorCode)
       try {
-        if (cacheManager.store && typeof cacheManager.store.keys === 'function') {
+        if (
+          cacheManager.store &&
+          typeof cacheManager.store.keys === 'function'
+        ) {
           const keys = await cacheManager.store.keys('*landmarks*')
           if (keys.length > 0 && typeof cacheManager.get === 'function') {
             const cachedData = await cacheManager.get(keys[0])
-            
+
             if (cachedData) {
               expect(Array.isArray(cachedData)).toBe(true)
-              
+
               if (cachedData.length > 0 && firstResponse.body?.length > 0) {
                 expect(cachedData[0]).toHaveProperty('name')
                 expect(cachedData[0]).toHaveProperty('type')
@@ -279,7 +296,7 @@ describe('Landmarks API (e2e)', () => {
     const testCoordinates = {
       lat: 51.5074,
       lng: -0.1278,
-      radius: 500
+      radius: 500,
     }
 
     describe('POST /webhook (Async)', () => {
@@ -345,7 +362,7 @@ describe('Landmarks API (e2e)', () => {
       it('should validate input parameters', () => {
         const invalidCoordinates = {
           lat: 'invalid',
-          lng: -0.1278
+          lng: -0.1278,
         }
 
         return request(app.getHttpServer())

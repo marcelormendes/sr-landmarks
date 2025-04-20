@@ -87,7 +87,10 @@
   },
   "jest": {
     "moduleNameMapper": {
-      "^src/(.*)$": "<rootDir>/$1"
+      "^src/(.*)$": "<rootDir>/$1",
+      "^@modules/(.*)$": "<rootDir>/modules/$1",
+      "^@common/(.*)$": "<rootDir>/common/$1",
+      "^@shared/(.*)$": "<rootDir>/shared/$1"
     },
     "moduleDirectories": [
       "node_modules",
@@ -101,7 +104,7 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
+    "rootDir": "./src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
@@ -113,6 +116,8 @@
     "testEnvironment": "node",
     "verbose": false,
     "silent": true,
-    "setupFilesAfterEnv": ["<rootDir>/../test/jest.setup.ts"]
+    "setupFilesAfterEnv": [
+      "<rootDir>/../test/jest.setup.ts"
+    ]
   }
 }

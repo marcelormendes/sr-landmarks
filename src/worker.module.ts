@@ -3,14 +3,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { TerminusModule } from '@nestjs/terminus'
 import { BullModule } from '@nestjs/bullmq'
 import { CacheModule } from '@nestjs/cache-manager'
-import configuration from './config/configuration'
-import { createRedisCacheConfig } from './config/redis.config'
-import { RepositoryModule } from './repositories/repository.module'
-import { HealthModule } from './controllers/health/health.module'
-import { PrismaModule } from './services/prisma.module'
-import { OverpassModule } from './services/overpass/overpass.module'
-import { LandmarksModule } from './services/landmarks/landmarks.module'
-import { LandmarksQueueModule } from './services/landmarks/queue/landmarks-queue.module'
+import configuration from './common/config/configuration'
+import { createRedisCacheConfig } from '@common/config/redis.config'
+import { HealthModule } from '@common/health/health.module'
+import { PrismaModule } from '@common/prisma/prisma.module'
+import { OverpassModule } from '@modules/overpass/overpass.module'
+import { LandmarksModule } from '@modules/landmarks/landmarks.module'
+import { LandmarksQueueModule } from '@modules/queue/queue.module'
+import { WebhookModule } from '@modules/webhook/webhook.module'
 
 /**
  * Minimal module for worker-only instances
@@ -63,7 +63,7 @@ import { LandmarksQueueModule } from './services/landmarks/queue/landmarks-queue
     // Core modules needed for job processing
     PrismaModule,
     TerminusModule,
-    RepositoryModule,
+    WebhookModule,
     OverpassModule,
     LandmarksModule,
     LandmarksQueueModule,
