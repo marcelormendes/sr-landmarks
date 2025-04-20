@@ -98,7 +98,11 @@ export class WebhookController {
         message: RESPONSE_MESSAGES.WEBHOOK_RECEIVED,
       }
     } catch (error) {
-      throw new WebhookException('SRW001', HttpStatus.INTERNAL_SERVER_ERROR)
+      throw new WebhookException(
+        'SRW001',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        error,
+      )
     }
   }
 

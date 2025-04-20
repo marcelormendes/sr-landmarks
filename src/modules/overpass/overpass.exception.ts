@@ -1,7 +1,12 @@
 import { HttpStatus } from '@nestjs/common'
 import { CustomException } from '@common/exceptions/custom.exceptions'
-import errorCodes from './overpass.error-codes.json'
 
+export const errorCodes: Record<string, string> = {
+  SRO001: 'Overpass API processing failed',
+  SRO002: 'Overpass API URL is missing',
+  SRO003: 'Overpass timeout is missing',
+  SRO004: 'Overpass max retries is missing',
+}
 /**
  * Thrown when an Overpass API operation fails.
  */

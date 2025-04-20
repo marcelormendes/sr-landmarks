@@ -1,7 +1,11 @@
 import { HttpStatus } from '@nestjs/common'
 import { CustomException } from '@common/exceptions/custom.exceptions'
-import errorCodes from './landmarks.error-codes.json'
 
+export const errorCodes: Record<string, string> = {
+  SRL001: 'Landmark processing failed',
+  SRL002: 'Invalid coordinates',
+  SRL003: 'Landmark not found',
+}
 /**
  * Thrown when a landmarks operation fails.
  */

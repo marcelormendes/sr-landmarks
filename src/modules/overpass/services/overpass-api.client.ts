@@ -1,4 +1,4 @@
-import { Injectable, Logger, HttpStatus } from '@nestjs/common'
+import { Injectable, HttpStatus } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { OverpassApiResponse } from '@shared/interfaces/overpass.api.response'
 import { OverpassResponseSchema } from '@modules/overpass/overpass.schema'

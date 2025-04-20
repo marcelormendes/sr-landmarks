@@ -1,6 +1,11 @@
 import { HttpStatus } from '@nestjs/common'
 import { CustomException } from '@common/exceptions/custom.exceptions'
-import errorCodes from './pipe.error-codes.json'
+
+export const errorCodes: Record<string, string> = {
+  SP001: 'Invalid coordinates',
+  SP002: 'Zod Schema validation failed',
+  SP003: 'No data provided or empty object',
+}
 
 /**
  * Thrown when an auth operation fails.
@@ -8,7 +13,7 @@ import errorCodes from './pipe.error-codes.json'
 export class PipeException extends CustomException {
   constructor(
     errorCode: string,
-    status: number = HttpStatus.UNAUTHORIZED,
+    status: number = HttpStatus.BAD_REQUEST,
     details?: unknown,
   ) {
     const message = errorCodes[errorCode]

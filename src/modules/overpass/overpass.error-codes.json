@@ -1,6 +1,0 @@
-{
-  "SRO001": "Overpass API processing failed",
-  "SRO002": "Overpass API URL is missing",
-  "SRO003": "Overpass timeout is missing",
-  "SRO004": "Overpass max retries is missing"
-}

@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { LandmarkDto } from '@modules/landmarks/landmark.dto'
-import { OverpassException } from '../overpass.exception'
 import { OverpassApiClient } from '@modules/overpass/services/overpass-api.client'
 import { OverpassQueryBuilder } from '@modules/overpass/services/overpass-query.builder'
 import { OverpassResponseProcessor } from '@modules/overpass/services/overpass-response.processor'

@@ -1,6 +1,10 @@
 import { HttpStatus } from '@nestjs/common'
 import { CustomException } from '@common/exceptions/custom.exceptions'
-import errorCodes from './queue.error-codes.json'
+
+export const errorCodes: Record<string, string> = {
+  SQR001: 'Task consuming failed',
+  SQR002: 'Queue publishing failed',
+}
 
 /**
  * Thrown when a queue operation fails.

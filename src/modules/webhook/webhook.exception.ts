@@ -1,6 +1,11 @@
 import { HttpStatus } from '@nestjs/common'
 import { CustomException } from '@common/exceptions/custom.exceptions'
-import errorCodes from './webhook.error-codes.json'
+
+export const errorCodes: Record<string, string> = {
+  SRW001: 'Webhook processing failed',
+  SRW002: 'Webhook not found',
+  SRW003: 'Error on adding job on queue',
+}
 
 /**
  * Thrown when a webhook operation fails.

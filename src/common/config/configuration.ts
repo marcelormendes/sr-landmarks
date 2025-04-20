@@ -1,7 +1,7 @@
 import { envSchema } from './configuration.schema'
 import { JWT_CONSTANTS } from '@shared/constants/auth.constants'
 import { CustomException } from '@common/exceptions/custom.exceptions'
-import { Logger, HttpStatus } from '@nestjs/common'
+import { HttpStatus } from '@nestjs/common'
 
 export default () => {
   // Check if we're in test mode
